@@ -8,7 +8,7 @@ from datetime import datetime
 # Configure the serial port (adjust COM port and baud rate as needed)
 SERIAL_PORT = 'COM10'  # Change to your Arduino's port (e.g., '/dev/ttyUSB0' for Linux)
 BAUD_RATE = 115200
-OUTPUT_FILE = 'data_log.csv'
+OUTPUT_FILE = 'DataLogs/b_and_m_calibration.csv'
 
 def read_serial_data():
     try:

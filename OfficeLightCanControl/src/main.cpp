@@ -1,17 +1,7 @@
 #include <Arduino.h>
 #include <0hardware_config.h>
-#include <1luxmeter_manager.h>
 #include "hardware/flash.h"
 #include <luxmeter.h>
-
-
-
-unsigned long previousMillis = 0;
-int dutyCycle = 0;
-
-
-uint8_t id[8];
-
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE);
@@ -22,32 +12,34 @@ void setup() {
     analogWriteFreq(60000);
     analogWriteRange(DAC_RANGE);
 
-
     flash_get_unique_id(id);
     luxMeter.setCalibration(id);
-    
-
-
 }
 
 void loop() {
-    // unsigned long currentMillis = millis();
+    unsigned long currentMillis = millis();
 
-    // if (currentMillis - previousMillis >= interval) {
-    //     previousMillis = currentMillis;
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
 
-    //     analogWrite(LED_PIN, dutyCycle);
-    //     dutyCycle += STEP_SIZE;
-    //     if (dutyCycle > DAC_RANGE) {
-    //         dutyCycle = 0;
-    //     }
-    // }
+        dutyCycle += STEP_SIZE;
+        if (dutyCycle > DAC_RANGE) {
+            dutyCycle = 0;
+            analogWrite(LED_PIN, dutyCycle);
+            delay (3000);
+        }
+        analogWrite(LED_PIN, dutyCycle);
+    }
 
-    // float lux = luxMeter.readLux();
-    // float voltage = luxMeter.readVoltage();
-    // float resistance = luxMeter.readResistance();
-    // int adcValue = luxMeter.readRawADC();
+    // Read the ADC value
+    int adcValue = analogRead(LDR_PIN);
 
-    // Serial.printf("Millis:%lu, PWM:%.1f, ADC:%d, Voltage:%.2fV, Resistance:%.2fohm, LUX:%.2f\n",
-    //               currentMillis, dutyCycle / (float)DAC_RANGE, adcValue, voltage, resistance, lux);
+    // Call calculateAllValues and get the results
+    auto [voltage, resistance, lux] = luxMeter.calculateAllValues(adcValue);
+
+
+    Serial.printf("%lu, %.1f, %d, %.2fV, %.2f, %.2f\n",
+                  currentMillis, dutyCycle / (float)DAC_RANGE, adcValue, voltage, resistance, lux);
+
+    delay(50);
 }

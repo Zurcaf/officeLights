@@ -1,0 +1,3 @@
+A --> Raspberry Pi Pico Unique ID: E66118604B843A21
+B --> Raspberry Pi Pico Unique ID: E660C0D1C76F222F
+

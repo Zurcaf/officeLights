@@ -6,18 +6,21 @@
 
 class LuxMeter {
 public:
-    LuxMeter(int ldrPin, float vcc, float rFixed, float m, float b, int adcRange);
+    LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange);
     float readLux();
     float readVoltage();
     float readResistance();
     int readRawADC();
+    void setCalibration(uint8_t* id);
+    float _m = 0;
+    float _b = 0;
 
 private:
     int _ldrPin;
-    float _vcc;
+    float _vcc = 3.3;
     float _rFixed;
-    float _m;
-    float _b;
+
+    uint8_t* _id;
     int _adcRange;
 
     float adcToVoltage(int adcValue);

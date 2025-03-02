@@ -9,6 +9,8 @@
 
 // ID of the device
 uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+// Time configurations
 unsigned long previousMillis = 0;
 
 // ADC and DAC configurations

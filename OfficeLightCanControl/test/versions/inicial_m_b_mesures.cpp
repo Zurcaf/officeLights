@@ -1,21 +1,3 @@
-#include <Arduino.h>
-#include <0configs.h>
-#include "hardware/flash.h"
-#include <luxmeter.h>
-
-// Initialize LuxMeter
-LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE);
-
-void setup() {
-    Serial.begin(115200);
-    analogReadResolution(12);
-    analogWriteFreq(60000);
-    analogWriteRange(DAC_RANGE);
-
-    flash_get_unique_id(id);
-    luxMeter.setCalibration(id);
-}
-
 void loop() {
     unsigned long currentMillis = millis();
 

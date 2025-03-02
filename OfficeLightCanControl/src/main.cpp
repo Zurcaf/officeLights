@@ -5,7 +5,7 @@
 #include <driver.h>
 
 // Initialize LuxMeter
-LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE);
+LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
@@ -38,11 +38,7 @@ void loop() {
     int dutyCycle = driver.calibrate_bm(currentMillis);
 
     // Call calculateAllValues and get the results
-    auto [adcValue,voltage, resistance, lux] = luxMeter.calculateAllValues();
-
-    Serial.printf("%lu, %.1f, %.2f, %.2fV, %.2f, %.2f\n",
-                  currentMillis, dutyCycle / (float)DAC_RANGE, adcValue, voltage, resistance, lux);
-    delay(50);
+    luxMeter.calibrate_bm(currentMillis, dutyCycle);
 }
 
 // Function to run on Core 0: Continuously update moving average

@@ -1,8 +1,8 @@
 // luxmeter.cpp
 #include <luxmeter.h>
 
-LuxMeter::LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange)
-    : _ldrPin(ldrPin), _vcc(vcc), _rFixed(rFixed), _adcRange(adcRange) 
+LuxMeter::LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange, int dacRange)
+    : _ldrPin(ldrPin), _vcc(vcc), _rFixed(rFixed), _adcRange(adcRange), _dacRange(dacRange)
     {
         VOLT_PER_UNIT = _vcc / _adcRange;
     }
@@ -134,3 +134,14 @@ void LuxMeter::updateHistory(int adcValue)
     // Update the history index for the next value (%) makes it a circular buffer
     historyIndex = (historyIndex + 1) % WINDOW_SIZE;
 }
+
+void LuxMeter::calibrate_bm(unsigned long currentMillis, int dutyCycle)
+{
+      // Call calculateAllValues and get the results
+      auto [adcValue,voltage, resistance, lux] = calculateAllValues();
+
+      Serial.printf("%lu, %.1f, %.2f, %.2fV, %.2f, %.2f\n",
+                    currentMillis, dutyCycle / (float)_dacRange, adcValue, voltage, resistance, lux);
+      delay(50);
+}
+

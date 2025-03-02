@@ -9,7 +9,7 @@
 class LuxMeter {
 public:
     // Constructor
-    LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange);
+    LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange, int dacRange);
 
     // Set calibration based on the ID of the device
     bool setCalibration(uint8_t* id);
@@ -22,6 +22,8 @@ public:
     
     // Helper method to update history and running sum
     void updateMovingAverage(unsigned long currentMillis);
+
+    void calibrate_bm(unsigned long currentMillis, int dutuCycle);
 ;
 
 private:
@@ -30,6 +32,7 @@ private:
     float _vcc = 3.3;
     float _rFixed =10000;
     int _adcRange = 4096;
+    int _dacRange = 4096;
     
     // Lux calculation parameters
     float VOLT_PER_UNIT = _vcc / _adcRange;

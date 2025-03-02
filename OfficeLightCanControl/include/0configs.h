@@ -24,4 +24,7 @@ constexpr int interval = 6000;
 // Luxmeter configurations
 int dutyCycle = 0;
 
+// Function to run on Core 1: Continuously update moving average
+void core1_task();
+
 #endif // HARDWARE_CONFIG_H

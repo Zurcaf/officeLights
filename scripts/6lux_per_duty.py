@@ -30,7 +30,7 @@ class LuxMeter:
         return self.voltage_to_lux(v_adc)
 
 # Load data from CSV
-df = pd.read_csv("data_log.csv")
+df = pd.read_csv("data_log_A.csv")
 
 # Sort data by time (Millis)
 df = df.sort_values(by=["Millis"])

@@ -17,7 +17,7 @@ void loop() {
     auto [adcValue,voltage, resistance, lux] = luxMeter.calculateAllValues();
 
 
-    Serial.printf("%lu, %.1f, %.2f, %.2fV, %.2f, %.2f\n",
+    Serial.printf("%lu, %.1f, %d, %.2fV, %.2f, %.2f\n",
                   currentMillis, dutyCycle / (float)DAC_RANGE, adcValue, voltage, resistance, lux);
 
     delay(50);

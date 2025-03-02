@@ -23,7 +23,7 @@ public:
     // Helper method to update history and running sum
     void updateMovingAverage(unsigned long currentMillis);
 
-    void calibrate_bm(unsigned long currentMillis, int dutuCycle);
+    void calibrate_bm(unsigned long currentMillis, float dutuCycle);
 ;
 
 private:

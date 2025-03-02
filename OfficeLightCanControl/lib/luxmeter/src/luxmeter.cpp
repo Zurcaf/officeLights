@@ -135,13 +135,13 @@ void LuxMeter::updateHistory(int adcValue)
     historyIndex = (historyIndex + 1) % WINDOW_SIZE;
 }
 
-void LuxMeter::calibrate_bm(unsigned long currentMillis, int dutyCycle)
+void LuxMeter::calibrate_bm(unsigned long currentMillis, float dutyCycle)
 {
       // Call calculateAllValues and get the results
       auto [adcValue,voltage, resistance, lux] = calculateAllValues();
 
       Serial.printf("%lu, %.1f, %.2f, %.2fV, %.2f, %.2f\n",
-                    currentMillis, dutyCycle / (float)_dacRange, adcValue, voltage, resistance, lux);
+                    currentMillis, dutyCycle, adcValue, voltage, resistance, lux);
       delay(50);
 }
 

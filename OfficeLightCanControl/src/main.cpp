@@ -31,14 +31,9 @@ void setup() {
     multicore_launch_core1(core1_task);
 }
 
-void loop() {
-    unsigned long currentMillis = millis();
-
-    // Call calibrate_bm and get the results
-    int dutyCycle = driver.calibrate_bm(currentMillis);
-
-    // Call calculateAllValues and get the results
-    luxMeter.calibrate_bm(currentMillis, dutyCycle);
+void loop()
+{
+    calibrate_Mb();
 }
 
 // Function to run on Core 0: Continuously update moving average
@@ -50,3 +45,17 @@ void core1_task() {
     }
 }
 
+void calibrate_Mb ()
+{
+    unsigned long currentMillis = millis();
+    float dutyCycle = driver.calibrate_bm(currentMillis);
+    luxMeter.calibrate_bm(currentMillis, dutyCycle);
+}
+
+void calibrate_Gd ()
+{
+    driver.setDutyCycle(0.5);
+    delay(3000);
+    driver.setDutyCycle(0.3);
+    delay(3000);
+}

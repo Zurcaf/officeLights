@@ -18,10 +18,13 @@ constexpr float Vcc = 3.3;
 constexpr float R_fixed = 10000;
 constexpr int ADC_RANGE = 4096;
 constexpr int DAC_RANGE = 4096;
-constexpr int STEP_SIZE = DAC_RANGE / 10;
 constexpr int interval = 6000;
+constexpr float STEP_SIZE = 0.1;
+
 
 // Function to run on Core 1: Continuously update moving average
 void core1_task();
+void calibrate_Mb ();
+void calibrate_Gd ();
 
 #endif // HARDWARE_CONFIG_H

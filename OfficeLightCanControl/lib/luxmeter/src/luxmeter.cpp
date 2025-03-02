@@ -20,18 +20,15 @@ bool LuxMeter::setCalibration(uint8_t* id) {
     // Compare the id byte-by-byte
     if (id != nullptr && memcmp(id, targetId1, 8) == 0) {
         // If IDs match, set the m and b coefficients for A
-        _m = -1.189;
+        _m = -0.8;
         _b = 5.976;
         return false;
     }else if (id != nullptr && memcmp(id, targetId2, 8) == 0) {
         // If IDs match, set the m and b coefficients for B
-        _m = -1.189;
+        _m = -0.8;
         _b = 5.976;
         return false;
     }else {
-        // If IDs do not match, set the m and b coefficients for default
-        _m = -1.189;
-        _b = 5.976;
         return true;
     }
 }

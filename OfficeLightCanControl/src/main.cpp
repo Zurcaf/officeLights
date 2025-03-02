@@ -33,7 +33,7 @@ void setup() {
 
 void loop()
 {
-    calibrate_Mb();
+    calibrate_Gd();
 }
 
 // Function to run on Core 0: Continuously update moving average
@@ -54,8 +54,24 @@ void calibrate_Mb ()
 
 void calibrate_Gd ()
 {
-    driver.setDutyCycle(0.5);
-    delay(3000);
-    driver.setDutyCycle(0.3);
-    delay(3000);
+    // Get the 0% duty cycle lux value
+    driver.setDutyCycle(0);
+    delay (5000);
+    float lux = luxMeter.getLuxValue();
+    Serial.printf("Lux: %f\n", lux);
+
+    // Set the duty cycle to 70% and get the lux value
+    driver.setDutyCycle(0.7);
+    delay(5000);
+    float lux_70 = luxMeter.getLuxValue();
+    Serial.printf("Lux 70: %f\n", lux_70);
+
+    // Calculate the gain and offset
+    float G = (lux_70 - lux) / 0.7;
+    float d = lux;
+
+    // Set the gain and offset
+    driver.setGainOffset(G, d);
+    Serial.printf("G: %f, d: %f\n", G, d);
+    delay(5000);
 }

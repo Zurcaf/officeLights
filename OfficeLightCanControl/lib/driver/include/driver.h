@@ -28,6 +28,9 @@ public:
     // Set the duty cycle of the LED
     void setDutyCycle(float dutyCycle);
 
+    // Set Gain and offset d
+    void setGainOffset(float G, float d);
+
 };
 
 #endif

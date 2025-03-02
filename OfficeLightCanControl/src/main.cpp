@@ -1,10 +1,14 @@
 #include <Arduino.h>
-#include <0configs.h>
 #include "hardware/flash.h"
+#include <0configs.h>
 #include <luxmeter.h>
+#include <driver.h>
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE);
+
+Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
+
 bool unowned_rasp = true;
 void setup() {
     Serial.begin(115200);
@@ -22,6 +26,7 @@ void setup() {
         Serial.println("Unowned Raspberry Pi.");
         delay(5000);
     }
+
     // Launch moving average task on Core 0
     multicore_launch_core1(core1_task);
 }
@@ -29,25 +34,14 @@ void setup() {
 void loop() {
     unsigned long currentMillis = millis();
 
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;
-
-        dutyCycle += STEP_SIZE;
-        if (dutyCycle > DAC_RANGE) {
-            dutyCycle = 0;
-            analogWrite(LED_PIN, dutyCycle);
-            delay (3000);
-        }
-        analogWrite(LED_PIN, dutyCycle);
-    }
+    // Call calibrate_bm and get the results
+    int dutyCycle = driver.calibrate_bm(currentMillis);
 
     // Call calculateAllValues and get the results
     auto [adcValue,voltage, resistance, lux] = luxMeter.calculateAllValues();
 
-
     Serial.printf("%lu, %.1f, %.2f, %.2fV, %.2f, %.2f\n",
                   currentMillis, dutyCycle / (float)DAC_RANGE, adcValue, voltage, resistance, lux);
-
     delay(50);
 }
 

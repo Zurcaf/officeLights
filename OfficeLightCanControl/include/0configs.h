@@ -21,9 +21,6 @@ constexpr int DAC_RANGE = 4096;
 constexpr int STEP_SIZE = DAC_RANGE / 10;
 constexpr int interval = 6000;
 
-// Luxmeter configurations
-int dutyCycle = 0;
-
 // Function to run on Core 1: Continuously update moving average
 void core1_task();
 

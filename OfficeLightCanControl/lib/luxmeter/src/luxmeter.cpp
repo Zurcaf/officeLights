@@ -100,14 +100,15 @@ void LuxMeter::updateMovingAverage(unsigned long currentMillis)
     {
         int newAdcValue = analogRead(_ldrPin);
         float currentAvg = (runningSum / WINDOW_SIZE);
+
         // Calculate deviation from current average
         float deviation = abs(newAdcValue - currentAvg);
+
         // Simple initial case: accept first WINDOW_SIZE readings
         if (historyIndex < WINDOW_SIZE && runningSum == 0)
         {
             updateHistory(newAdcValue);
         }
-
         // Check if the new value is within acceptable range
         else
         {
@@ -118,7 +119,7 @@ void LuxMeter::updateMovingAverage(unsigned long currentMillis)
                 updateHistory(newAdcValue);
             } // Else, skip this outlier
         }
-
+        
         filteredAdcValue = runningSum / WINDOW_SIZE;
         lastUpdateMillis = currentMillis;
     }
@@ -129,6 +130,7 @@ void LuxMeter::updateHistory(int adcValue)
     runningSum -= adcHistory[historyIndex];
     runningSum += adcValue;
     adcHistory[historyIndex] = adcValue;
+
+    // Update the history index for the next value (%) makes it a circular buffer
     historyIndex = (historyIndex + 1) % WINDOW_SIZE;
 }
-

@@ -2,7 +2,6 @@
 #define DRIVER_H
 
 #include <Arduino.h>
-#include <luxmeter.h>
 
 class Driver {
 private:
@@ -14,8 +13,7 @@ private:
     float _dutyCycle;
     unsigned long _previousMillis;
 
-    float _G;
-    float _d;
+    
 
 public:
     // Constructor
@@ -29,7 +27,10 @@ public:
     void setDutyCycle(float dutyCycle);
 
     // Set Gain and offset d
-    void setGainOffset(float G, float d);
+    void setGainOffset(float _G, float _d);
+
+    float G;
+    float d;
 
 };
 

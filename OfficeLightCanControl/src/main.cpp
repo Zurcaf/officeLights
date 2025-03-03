@@ -10,6 +10,8 @@ LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 bool unowned_rasp = true;
+bool uncalibrated = true;
+
 void setup() {
     Serial.begin(115200);
     analogReadResolution(12);
@@ -34,6 +36,10 @@ void setup() {
 void loop()
 {
     calibrate_Gd();
+
+    Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
+    delay(5000);
+
 }
 
 // Function to run on Core 0: Continuously update moving average
@@ -52,26 +58,57 @@ void calibrate_Mb ()
     luxMeter.calibrate_bm(currentMillis, dutyCycle);
 }
 
-void calibrate_Gd ()
+void calibrate_Gd()
 {
-    // Get the 0% duty cycle lux value
-    driver.setDutyCycle(0);
-    delay (5000);
-    float lux = luxMeter.getLuxValue();
-    Serial.printf("Lux: %f\n", lux);
+    if (uncalibrated)
+    {
+        // Get the 0% duty cycle lux value
+        driver.setDutyCycle(0);
+        delay(5000);
+        float lux = luxMeter.getLuxValue();
+        // Serial.printf("Lux: %f\n", lux);
 
-    // Set the duty cycle to 70% and get the lux value
-    driver.setDutyCycle(0.7);
-    delay(5000);
-    float lux_70 = luxMeter.getLuxValue();
-    Serial.printf("Lux 70: %f\n", lux_70);
+        // Set the duty cycle to 70% and get the lux value
+        driver.setDutyCycle(0.7);
+        delay(5000);
+        float lux_70 = luxMeter.getLuxValue();
+        // Serial.printf("Lux 70: %f\n", lux_70);
 
-    // Calculate the gain and offset
-    float G = (lux_70 - lux) / 0.7;
-    float d = lux;
+        // Calculate the gain and offset
+        float G = (lux_70 - lux) / 0.7;
+        float d = lux;
 
-    // Set the gain and offset
-    driver.setGainOffset(G, d);
-    Serial.printf("G: %f, d: %f\n", G, d);
-    delay(5000);
+        // Set the gain and offset
+        driver.setGainOffset(G, d);
+        // Serial.printf("G: %f, d: %f\n", G, d);
+    }
 }
+
+
+
+
+// // Example usage
+// int main() {
+//     // Create PID controller with initial gains
+//     // kp=0.1, ki=0.01, kd=0.05, kf=0.5
+//     LuminairePID controller(0.1, 0.01, 0.05, 0.5);
+    
+//     // Set desired illuminance to 500 lux
+//     controller.setTargetIlluminance(500.0);
+    
+//     // Simulate control loop
+//     double currentIlluminance = 0.0;
+//     for (int i = 0; i < 100; i++) {
+//         // Get control signal (0-100%)
+//         double controlSignal = controller.update(currentIlluminance);
+        
+//         // Simulate luminaire response
+//         currentIlluminance = controller.simulateLuminaire(controlSignal);
+        
+//         // Print results
+//         printf("Step %d: Setpoint=%.1f, Current=%.1f, Control=%.1f%%\n",
+//                i, controller.getSetPoint(), currentIlluminance, controlSignal);
+//     }
+    
+//     return 0;
+// }

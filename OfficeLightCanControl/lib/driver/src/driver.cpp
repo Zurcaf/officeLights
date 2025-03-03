@@ -34,8 +34,8 @@ void Driver::setDutyCycle(float dutyCycle)
     analogWrite(_ledPin, writedutyCycle);
 }
 
-void Driver::setGainOffset(float G, float d)
+void Driver::setGainOffset(float _G, float _d)
 {
-    _G = G;
-    _d = d;
+    G = _G;
+    d = _d;
 }

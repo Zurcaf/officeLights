@@ -3,11 +3,16 @@
 #include <0configs.h>
 #include <luxmeter.h>
 #include <driver.h>
+#include <PID.h>
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 
+// Initialize Driver
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
+
+// PID controller instance
+pid pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.5f, 10.0f);  // Default tuning (adjust as needed)
 
 bool unowned_rasp = true;
 bool uncalibrated = true;
@@ -29,17 +34,40 @@ void setup() {
         delay(5000);
     }
 
-    // Launch moving average task on Core 0
+    // Launch moving average task on Core 1
     multicore_launch_core1(core1_task);
 }
 
 void loop()
 {
-    calibrate_Gd();
+    float setpoint = 3.0f;  // Desired illuminance in lux
+    if (uncalibrated)
+    {
+        calibrate_Gd();
+        Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
+        delay(5000);
 
-    Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
-    delay(5000);
+        uncalibrated = false;
 
+        // After calibration, start PID control to maintain a setpoint (e.g., 500 lux)
+        
+        // Update PID reference value
+        pidController.update_reference(setpoint);
+    }
+
+    float measuredLux = luxMeter.getLuxValue();  // Get current illuminance from LuxMeter
+
+    // Update PID controller
+    float dutyCycle = pidController.compute_control(measuredLux);
+
+    // Set the duty cycle (0-100%) using the Driver
+    driver.setDutyCycle(dutyCycle);  // Convert percentage to 0-1 for Driver
+
+    // Debug output
+    Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
+                  setpoint, measuredLux, dutyCycle);
+
+    delay(100);  // Update every 100ms (adjust as needed for stability)
 }
 
 // Function to run on Core 0: Continuously update moving average
@@ -47,6 +75,14 @@ void core1_task() {
     while (true) {
         unsigned long currentMillis = millis();
         luxMeter.updateMovingAverage(currentMillis);
+
+        // Update PID states (housekeep) every 10ms (or match LuxMeter update rate)
+        static unsigned long lastHousekeep = 0;
+        if (currentMillis - lastHousekeep >= 10) {  // Update states every 10ms
+            float measuredLux = luxMeter.getLuxValue();  // Assume this is thread-safe
+            pidController.housekeep(measuredLux);  // Update PID states
+            lastHousekeep = currentMillis;
+        }
         delay(1);  // Small delay to prevent core from hogging resources
     }
 }
@@ -83,32 +119,3 @@ void calibrate_Gd()
         // Serial.printf("G: %f, d: %f\n", G, d);
     }
 }
-
-
-
-
-// // Example usage
-// int main() {
-//     // Create PID controller with initial gains
-//     // kp=0.1, ki=0.01, kd=0.05, kf=0.5
-//     LuminairePID controller(0.1, 0.01, 0.05, 0.5);
-    
-//     // Set desired illuminance to 500 lux
-//     controller.setTargetIlluminance(500.0);
-    
-//     // Simulate control loop
-//     double currentIlluminance = 0.0;
-//     for (int i = 0; i < 100; i++) {
-//         // Get control signal (0-100%)
-//         double controlSignal = controller.update(currentIlluminance);
-        
-//         // Simulate luminaire response
-//         currentIlluminance = controller.simulateLuminaire(controlSignal);
-        
-//         // Print results
-//         printf("Step %d: Setpoint=%.1f, Current=%.1f, Control=%.1f%%\n",
-//                i, controller.getSetPoint(), currentIlluminance, controlSignal);
-//     }
-    
-//     return 0;
-// }

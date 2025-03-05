@@ -12,8 +12,8 @@ LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-pid pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.5f, 10.0f);  // Default tuning (adjust as needed)
-
+//                 h,    K,    b,   alpha, Ti,    Td,   Tt,    N
+pid pidController(1.0f, 0.1f, 1.0f, 1.0f, 10.0f,  0.0f,   0.1f, 10.0f);  // Default tuning (adjust as needed)
 bool unowned_rasp = true;
 bool uncalibrated = true;
 
@@ -49,7 +49,7 @@ void loop()
 
         uncalibrated = false;
 
-        // After calibration, start PID control to maintain a setpoint (e.g., 500 lux)
+        // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
         
         // Update PID reference value
         pidController.update_reference(setpoint);
@@ -96,26 +96,23 @@ void calibrate_Mb ()
 
 void calibrate_Gd()
 {
-    if (uncalibrated)
-    {
-        // Get the 0% duty cycle lux value
-        driver.setDutyCycle(0);
-        delay(5000);
-        float lux = luxMeter.getLuxValue();
-        // Serial.printf("Lux: %f\n", lux);
+    // Get the 0% duty cycle lux value
+    driver.setDutyCycle(0);
+    delay(5000);
+    float lux = luxMeter.getLuxValue();
+    // Serial.printf("Lux: %f\n", lux);
 
-        // Set the duty cycle to 70% and get the lux value
-        driver.setDutyCycle(0.7);
-        delay(5000);
-        float lux_70 = luxMeter.getLuxValue();
-        // Serial.printf("Lux 70: %f\n", lux_70);
+    // Set the duty cycle to 70% and get the lux value
+    driver.setDutyCycle(0.7);
+    delay(5000);
+    float lux_70 = luxMeter.getLuxValue();
+    // Serial.printf("Lux 70: %f\n", lux_70);
 
-        // Calculate the gain and offset
-        float G = (lux_70 - lux) / 0.7;
-        float d = lux;
+    // Calculate the gain and offset
+    float G = (lux_70 - lux) / 0.7;
+    float d = lux;
 
-        // Set the gain and offset
-        driver.setGainOffset(G, d);
-        // Serial.printf("G: %f, d: %f\n", G, d);
-    }
+    // Set the gain and offset
+    driver.setGainOffset(G, d);
+    // Serial.printf("G: %f, d: %f\n", G, d);
 }

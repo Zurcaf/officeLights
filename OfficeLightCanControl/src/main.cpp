@@ -3,6 +3,7 @@
 #include <0configs.h>
 #include <luxmeter.h>
 #include <driver.h>
+#include <PID.h>
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
@@ -15,6 +16,8 @@ pid pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adju
 
 bool unowned_rasp = true;
 bool uncalibrated = true;
+
+float setpoint = 3.0f; // Setpoint for PID control
 
 void setup()
 {
@@ -45,12 +48,12 @@ void loop()
     {
         calibrate_Gd();
 
+        uncalibrated = false;
+
         Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
         delay(5000);
 
         // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-
-        // Update PID reference value
         pidController.update_reference(setpoint);
     }
 
@@ -75,11 +78,14 @@ void core1_task()
     while (true)
     {
         unsigned long currentMillis = millis();
-        luxMeter.updateMovingAverage(currentMillis);
-        delay(1); // Small delay to prevent core from hogging resources
+        if (currentMillis - previousMillis >= 10)
+        {
+            previousMillis = currentMillis;
+            luxMeter.updateMovingAverage(currentMillis);
+            pidController.housekeep(luxMeter.getLuxValue());
+        }
 
-        
-        
+        delay(1); // Small delay to prevent core from hogging resources
     }
 }
 

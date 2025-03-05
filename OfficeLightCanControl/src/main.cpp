@@ -3,21 +3,21 @@
 #include <0configs.h>
 #include <luxmeter.h>
 #include <driver.h>
-#include <PID.h>
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 
-// Initialize Driver
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-//                 h,    K,    b,   alpha, Ti,    Td,   Tt,    N
-pid pidController(1.0f, 0.1f, 1.0f, 1.0f, 10.0f,  0.0f,   0.1f, 10.0f);  // Default tuning (adjust as needed)
+//                 h,    K,    b,   Ti,    Td,      N
+pid pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
+
 bool unowned_rasp = true;
 bool uncalibrated = true;
 
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     analogReadResolution(12);
     analogWriteFreq(60000);
@@ -27,67 +27,63 @@ void setup() {
     unowned_rasp = luxMeter.setCalibration(id);
 
     // Print the ID of the Raspberry Pi to avoid running the code on the wrong device
-    while (unowned_rasp) {
+    while (unowned_rasp)
+    {
         Serial.printf("ID: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
                       id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7]);
         Serial.println("Unowned Raspberry Pi.");
         delay(5000);
     }
 
-    // Launch moving average task on Core 1
+    // Launch moving average task on Core 0
     multicore_launch_core1(core1_task);
 }
 
 void loop()
 {
-    float setpoint = 3.0f;  // Desired illuminance in lux
     if (uncalibrated)
     {
         calibrate_Gd();
+
         Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
         delay(5000);
 
-        uncalibrated = false;
-
         // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-        
+
         // Update PID reference value
         pidController.update_reference(setpoint);
     }
 
-    float measuredLux = luxMeter.getLuxValue();  // Get current illuminance from LuxMeter
+    float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
 
     // Update PID controller
     float dutyCycle = pidController.compute_control(measuredLux);
 
     // Set the duty cycle (0-100%) using the Driver
-    driver.setDutyCycle(dutyCycle);  // Convert percentage to 0-1 for Driver
+    driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
 
     // Debug output
     Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
                   setpoint, measuredLux, dutyCycle);
 
-    delay(100);  // Update every 100ms (adjust as needed for stability)
+    delay(100); // Update every 100ms (adjust as needed for stability)
 }
 
 // Function to run on Core 0: Continuously update moving average
-void core1_task() {
-    while (true) {
+void core1_task()
+{
+    while (true)
+    {
         unsigned long currentMillis = millis();
         luxMeter.updateMovingAverage(currentMillis);
+        delay(1); // Small delay to prevent core from hogging resources
 
-        // Update PID states (housekeep) every 10ms (or match LuxMeter update rate)
-        static unsigned long lastHousekeep = 0;
-        if (currentMillis - lastHousekeep >= 10) {  // Update states every 10ms
-            float measuredLux = luxMeter.getLuxValue();  // Assume this is thread-safe
-            pidController.housekeep(measuredLux);  // Update PID states
-            lastHousekeep = currentMillis;
-        }
-        delay(1);  // Small delay to prevent core from hogging resources
+        
+        
     }
 }
 
-void calibrate_Mb ()
+void calibrate_Mb()
 {
     unsigned long currentMillis = millis();
     float dutyCycle = driver.calibrate_bm(currentMillis);

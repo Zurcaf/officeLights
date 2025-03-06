@@ -1,9 +1,13 @@
 #include <Arduino.h>
 #include "hardware/flash.h"
+
 #include <0configs.h>
 #include <luxmeter.h>
 #include <driver.h>
-#include <PID.h>
+#include <localController.h>
+#include <pcInterface.h>
+#include <dataStorageMetrics.h>
+#include <canRoutines.h>
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
@@ -12,7 +16,7 @@ Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
 //                 h,    K,    b,   Ti,    Td,      N
-pid pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
+localController pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
 
 bool unowned_rasp = true;
 bool uncalibrated = true;
@@ -47,7 +51,6 @@ void loop()
     if (uncalibrated)
     {
         calibrate_Gd();
-
         uncalibrated = false;
 
         Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
@@ -57,6 +60,7 @@ void loop()
         pidController.update_reference(setpoint);
     }
 
+    // Get current lux value
     float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
 
     // Update PID controller

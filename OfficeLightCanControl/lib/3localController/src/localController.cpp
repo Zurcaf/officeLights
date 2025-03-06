@@ -1,7 +1,7 @@
-#include <pid.h>
+#include <localController.h>
 
 // Constructor initializing PID parameters with member initialization list
-pid::pid(float h, float K, float b,
+localController::localController(float h, float K, float b,
          float Ti, float Td, float N)
     : h{h}, K{K}, b{b}, Ti{Ti}, Td{Td},  // Initialize sampling period, proportional gain, setpoint weight, 
                                         // integral time, and derivative time
@@ -10,10 +10,10 @@ pid::pid(float h, float K, float b,
 }
 
 // Destructor (empty as no dynamic memory is managed)
-pid::~pid() {
+localController::~localController() {
 }
 
-void pid::update_pid(float _K, float _b, float _Ti, float _Td, float _NDer)
+void localController::update_localController(float _K, float _b, float _Ti, float _Td, float _NDer)
 {
     K = _K;
     b = _b;
@@ -22,12 +22,12 @@ void pid::update_pid(float _K, float _b, float _Ti, float _Td, float _NDer)
     N = _NDer;
 }
 
-void pid::update_reference(float _r) {
+void localController::update_reference(float _r) {
     r = _r;
 }
 
 // Compute the control output (u) using PID formula
-float pid::compute_control(float y) {
+float localController::compute_control(float y) {
     float P = K * (b * r - y);  // Proportional term: weighted difference between reference and output
     float ad = Td / (Td + N * h);  // Derivative filter coefficient (a_d)
     float bd = Td * K * N / (Td + N * h);  // Derivative gain coefficient (b_d)

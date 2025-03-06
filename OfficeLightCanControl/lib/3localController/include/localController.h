@@ -1,7 +1,7 @@
-#ifndef PID_H
-#define PID_H
+#ifndef LOCAL_CONTROLLER
+#define LOCAL_CONTROLLER
 
-class pid {
+class localController {
 public:
     // Controller gains and parameters
     float I, D, K, Ti, Td, b, h, y_old, N;  // I: integral term, D: derivative term, K: proportional gain,
@@ -11,14 +11,14 @@ public:
 
 public:
     // Constructor with default values for K, b, Ti, Td, and N
-    explicit pid(float h, float K = 1, float b = 1,
+    explicit localController(float h, float K = 1, float b = 1,
                  float Ti = 1, float Td = 0, float N = 10);
 
     // Destructor
-    ~pid();
+    ~localController();
 
     // Update PID parameters
-    void update_pid(float _K, float _b, float _Ti, float _Td, float _NDer);
+    void update_localController(float _K, float _b, float _Ti, float _Td, float _NDer);
 
     // Update reference value
     void update_reference(float _r);
@@ -31,10 +31,10 @@ public:
 };
 
 // Inline implementation of housekeep to update integral term and store previous output
-inline void pid::housekeep(float y) {
-    float e = r - y;  // Error: difference between reference and measured output
-    I += K * h / Ti * e;  // Update integral term using proportional gain, sampling period, and integral time
-    y_old = y;  // Store current output as previous output for next iteration
+inline void localController::housekeep(float y) {
+    float e = r - y;            // Error: difference between reference and measured output
+    I += K * h / Ti * e;        // Update integral term using proportional gain, sampling period, and integral time
+    y_old = y;                  // Store current output as previous output for next iteration
 }
 
 #endif // PID_H

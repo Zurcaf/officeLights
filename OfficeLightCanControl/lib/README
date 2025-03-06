@@ -1,3 +1,10 @@
+(i) the illuminance measurement system (luxmeter)
+(ii) the LED actuation system (driver)
+(iii) the individual luminaire controller (local controller)
+(iv) a simple interface with a PC to receive commands and send back status data
+(v) data storage and computation of performance metrics
+(vi) routines to send and receive messages in the CAN-BUS.
+
 
 This directory is intended for project specific (private) libraries.
 PlatformIO will compile them to static libraries and link into executable file.

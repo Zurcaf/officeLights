@@ -18,6 +18,8 @@ Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 //                             h,    K,    b,   Ti,    Td,      N
 localController pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
 
+pcInterface interface(1);  // Assign this Pico as desk ID 1
+
 bool unowned_rasp = true;
 bool uncalibrated = true;
 
@@ -25,7 +27,7 @@ float setpoint = 3.0f; // Setpoint for PID control
 
 void setup()
 {
-    Serial.begin(115200);
+    pcInterface interface(1);  // Assign this Pico as desk ID 1
     analogReadResolution(12);
     analogWriteFreq(60000);
     analogWriteRange(DAC_RANGE);
@@ -48,32 +50,34 @@ void setup()
 
 void loop()
 {
-    if (uncalibrated)
-    {
-        calibrate_Gd();
-        uncalibrated = false;
+    pcInterface interface(1);  // Assign this Pico as desk ID 1
 
-        Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
-        delay(5000);
+    // if (uncalibrated)
+    // {
+    //     calibrate_Gd();
+    //     uncalibrated = false;
 
-        // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-        pidController.update_reference(setpoint);
-    }
+    //     Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
+    //     delay(5000);
 
-    // Get current lux value
-    float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
+    //     // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
+    //     pidController.update_reference(setpoint);
+    // }
+    
+    // // Get current lux value
+    // float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
 
-    // Update PID controller
-    float dutyCycle = pidController.compute_control(measuredLux);
+    // // Update PID controller
+    // float dutyCycle = pidController.compute_control(measuredLux);
 
-    // Set the duty cycle (0-100%) using the Driver
-    driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
+    // // Set the duty cycle (0-100%) using the Driver
+    // driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
 
-    // Debug output
-    Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
-                  setpoint, measuredLux, dutyCycle);
+    // // Debug output
+    // Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
+    //               setpoint, measuredLux, dutyCycle);
 
-    delay(100); // Update every 100ms (adjust as needed for stability)
+    delay(10); // Update every 100ms (adjust as needed for stability)
 }
 
 // Function to run on Core 0: Continuously update moving average
@@ -88,6 +92,8 @@ void core1_task()
             luxMeter.updateMovingAverage(currentMillis);
             pidController.housekeep(luxMeter.getLuxValue());
         }
+
+
 
         delay(1); // Small delay to prevent core from hogging resources
     }

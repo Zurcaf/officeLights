@@ -15,7 +15,7 @@ LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-//                 h,    K,    b,   Ti,    Td,      N
+//                             h,    K,    b,   Ti,    Td,      N
 localController pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
 
 bool unowned_rasp = true;

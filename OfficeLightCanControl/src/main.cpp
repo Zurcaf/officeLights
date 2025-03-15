@@ -12,14 +12,12 @@
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 
+// Initialize Driver
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-//                             h,    K,    b,   Ti,    Td,      N
-localController pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
-
+localController pidController(h, K, b, c, Ti, Td, Tt, officeLightsMode, N);
 bool unowned_rasp = true;
-bool uncalibrated = true;
 
 float setpoint = 3.0f; // Setpoint for PID control
 
@@ -42,56 +40,45 @@ void setup()
         delay(5000);
     }
 
-    // Launch moving average task on Core 0
-    multicore_launch_core1(core1_task);
+    calibrate_Gd();
+    
+
+    Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
+
+    // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
+    pidController.update_reference(setpoint);
 }
 
 void loop()
 {
-    if (uncalibrated)
+    unsigned long currentMillis = millis();
+    
+    luxMeter.updateMovingAverage(currentMillis);
+
+
+    if (currentMillis - previousMillis >= PID_PERIOD)
     {
-        calibrate_Gd();
-        uncalibrated = false;
+        previousMillis = currentMillis;
 
-        Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
-        delay(5000);
+        // Get current lux value
+        float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
 
-        // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-        pidController.update_reference(setpoint);
+        // Update PID controller
+        float dutyCycle = pidController.compute_control();	// Compute control output based on reference (r) and measured output (y)
+        
+        // Set the duty cycle (0-100%) using the Driver
+        driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
+
+        pidController.housekeep(measuredLux); // Update internal state (housekeeping) for the PID controller
+
+        // Debug output
+        Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
+                      setpoint, measuredLux, dutyCycle);
     }
 
-    // Get current lux value
-    float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
-
-    // Update PID controller
-    float dutyCycle = pidController.compute_control(measuredLux);
-
-    // Set the duty cycle (0-100%) using the Driver
-    driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
-
-    // Debug output
-    Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
-                  setpoint, measuredLux, dutyCycle);
-
-    delay(100); // Update every 100ms (adjust as needed for stability)
+    delay(10);
 }
 
-// Function to run on Core 0: Continuously update moving average
-void core1_task()
-{
-    while (true)
-    {
-        unsigned long currentMillis = millis();
-        if (currentMillis - previousMillis >= 10)
-        {
-            previousMillis = currentMillis;
-            luxMeter.updateMovingAverage(currentMillis);
-            pidController.housekeep(luxMeter.getLuxValue());
-        }
-
-        delay(1); // Small delay to prevent core from hogging resources
-    }
-}
 
 void calibrate_Mb()
 {
@@ -102,23 +89,27 @@ void calibrate_Mb()
 
 void calibrate_Gd()
 {
-    // Get the 0% duty cycle lux value
-    driver.setDutyCycle(0);
-    delay(5000);
-    float lux = luxMeter.getLuxValue();
-    // Serial.printf("Lux: %f\n", lux);
+    // // Get the 0% duty cycle lux value
+    // driver.setDutyCycle(0);
+    // delay(5000);
+    // float lux = luxMeter.getLuxValue();
+    // // Serial.printf("Lux: %f\n", lux);
 
-    // Set the duty cycle to 70% and get the lux value
-    driver.setDutyCycle(0.7);
-    delay(5000);
-    float lux_70 = luxMeter.getLuxValue();
-    // Serial.printf("Lux 70: %f\n", lux_70);
+    // // Set the duty cycle to 70% and get the lux value
+    // driver.setDutyCycle(0.7);
+    // delay(5000);
+    // float lux_70 = luxMeter.getLuxValue();
+    // // Serial.printf("Lux 70: %f\n", lux_70);
 
-    // Calculate the gain and offset
-    float G = (lux_70 - lux) / 0.7;
-    float d = lux;
+    // // Calculate the gain and offset
+    // float G = (lux_70 - lux) / 0.7;
+    // float d = lux;
 
-    // Set the gain and offset
-    driver.setGainOffset(G, d);
-    // Serial.printf("G: %f, d: %f\n", G, d);
+    // // Set the gain and offset
+    // driver.setGainOffset(G, d);
+    // // Serial.printf("G: %f, d: %f\n", G, d);
+
+    delay(1000);
+    driver.setGainOffset(4.986404, 0.702457);
+    
 }

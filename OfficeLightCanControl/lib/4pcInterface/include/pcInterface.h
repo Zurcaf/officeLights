@@ -2,6 +2,10 @@
 #define PC_INTERFACE_H
 
 #include <Arduino.h>
+#include <stdarg.h>
+#include <string>    // For std::string
+#include <sstream>   // For std::stringstream
+#include <vector>    // For std::vector
 
 #define BUFFER_SIZE 64
 
@@ -14,37 +18,54 @@ public:
 private:
     // Desk state structure for a single desk
     struct DeskState {
-        float dutyCycle;           // u
-        float illuminanceRef;      // r
-        float measuredIlluminance; // y
-        float ldrVoltage;          // v
-        bool occupancy;            // o
-        bool antiWindup;          // a
-        bool feedbackControl;     // f
-        float externalIlluminance; // d
-        float powerConsumption;    // p
-        float elapsedTime;         // t
-        float avgEnergy;          // E
-        float avgVisibilityError; // V
-        float avgFlickerError;    // F
-        float occupiedLowerBound; // O
-        float unoccupiedLowerBound;// U
-        float currentLowerBound;  // L
-        float energyCost;         // C
+        bool streaming_u;           // streaming duty cycle
+        bool streaming_y;           // streaming illuminance
+
+        float dutyCycle;            // u (duty cycle)
+        float illuminanceRef;       // r (reference illuminance)
+
+        // meeasurements
+        float measuredIlluminance;  // y (measured illuminance)
+        float ldrVoltage;           // v (LDR voltage)
+
+        bool occupancy;             // o (occupancy)
+        bool antiWindup;            // a (anti-windup)
+        bool feedbackControl;       // f (feedback control)
+        
+        float externalIlluminance;  // d (external illuminance) - constant
+
+        // metrics
+        float powerConsumption;     // p (power consumption)
+        float elapsedTime;          // t (elapsed time)
+        float avgEnergy;            // E (average energy)
+        float avgVisibilityError;   // V (average visibility error)
+        float avgFlickerError;      // F (average flicker error)
+
+        // Second part of lab
+        float occupiedLowerBound;   // O (occupied lower bound)
+        float unoccupiedLowerBound; // U (unoccupied lower bound)
+        float currentLowerBound;    // L (current lower bound)
+        float energyCost;           // C (energy cost)
     };
 
-    uint8_t myDeskId;  // The desk ID assigned to this Pico
-    DeskState desk;    // Single desk state
+    int myDeskId;                   // The desk ID assigned to this Pico
+    int numDesks;                   // Number of desks in the system
+    std::vector<int> listIds;       // List of all desk IDs in the system
+
+    DeskState desk;                 // Single desk state
+
     char commandBuffer[BUFFER_SIZE];
     uint8_t bufferIndex;
 
     // Command parsing and execution
     void parseCommand(const char* cmd);
-    void executeGetCommand(const char* cmd);
-    void executeSetCommand(const char* cmd);
-    void sendResponse(const char* format, ...);
+    bool isNotValidID(int id);
+    void executeGetCommand(std::vector<std::string> tokens);
+    void executeStreamCommand(std::vector<std::string> tokens);
+    void executeSetCommand(std::vector<std::string> tokens);
     
     // Helper functions
+    void sendResponse(const char* format, ...);
     uint8_t extractDeskId(const char* cmd);
     float extractValue(const char* cmd);
     void resetSystem();

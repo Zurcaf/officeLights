@@ -27,7 +27,7 @@ float setpoint = 3.0f; // Setpoint for PID control
 
 void setup()
 {
-    pcInterface interface(1);  // Assign this Pico as desk ID 1
+    interface.begin(115200); // Start serial communication with PC
     analogReadResolution(12);
     analogWriteFreq(60000);
     analogWriteRange(DAC_RANGE);
@@ -44,13 +44,13 @@ void setup()
         delay(5000);
     }
 
-    // Launch moving average task on Core 0
-    multicore_launch_core1(core1_task);
+    // // Launch moving average task on Core 0
+    // multicore_launch_core1(core1_task);
 }
 
 void loop()
 {
-    pcInterface interface(1);  // Assign this Pico as desk ID 1
+    interface.processSerial();
 
     // if (uncalibrated)
     // {
@@ -77,7 +77,7 @@ void loop()
     // Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
     //               setpoint, measuredLux, dutyCycle);
 
-    delay(10); // Update every 100ms (adjust as needed for stability)
+    delay(1000); // Update every 100ms (adjust as needed for stability)
 }
 
 // Function to run on Core 0: Continuously update moving average

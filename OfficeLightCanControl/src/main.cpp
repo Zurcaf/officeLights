@@ -50,13 +50,30 @@ void setup()
 void loop()
 {
     int current = millis();
+    float reference = 100.0f;
+
+    // if (current > 8000)
+    // {
+    //     // change the reference value
+    //     reference = 200.0f;
+    // }
 
     if (current - previousMillis >= 2000)
     {
         previousMillis = current;
 
-        // insert debug values for testing
-        metrics.insertValues(0.5, 100, 100, current);
+        // Test Flicker 
+        if (uncalibrated)
+        {
+            // insert debug values for testing
+            metrics.insertValues(100, 100, reference, current);
+            uncalibrated = false;
+        }else
+        {
+            // insert debug values for testing
+            metrics.insertValues(200, 100, reference, current);
+            uncalibrated = true;
+        }
 
         // Get buffer contents
         float uData[6000], yData[6000];

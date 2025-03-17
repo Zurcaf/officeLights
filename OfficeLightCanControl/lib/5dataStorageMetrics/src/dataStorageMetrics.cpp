@@ -1,6 +1,6 @@
 #include "dataStorageMetrics.h"
 #include <stdlib.h> // For abs()
-
+#include <Arduino.h>
 
 dataStorageMetrics::dataStorageMetrics() : 
     head(0), 
@@ -21,6 +21,13 @@ dataStorageMetrics::dataStorageMetrics() :
 dataStorageMetrics::~dataStorageMetrics() {}
 
 void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float luxReference, int timestamp) {
+    // Update buffer count
+    if (count < BUFFER_SIZE) {
+        count++;
+    } else {
+        isFull = true;
+    }
+    
     // Store values in buffers
     uBuffer[head] = dutyCycle;
     yBuffer[head] = luxMeasured;
@@ -30,13 +37,8 @@ void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float 
     // Update metrics incrementally
     updateMetrics(dutyCycle, luxMeasured, luxReference, timestamp);
 
-    // Update buffer state
+    // Update head index
     head = incrementIndex(head);
-    if (count < BUFFER_SIZE) {
-        count++;
-    } else {
-        isFull = true;
-    }
 }
 
 uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, int* timestampsOut) {
@@ -86,11 +88,27 @@ void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float
     if (count >= 2) {
         uint16_t prev1 = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;        // Previous sample index (t-1)
         uint16_t prev2 = (head - 2 + BUFFER_SIZE) % BUFFER_SIZE;        // Sample before previous (t-2)
-        
+
+        Serial.printf("Flicker: prev1 = %d, prev2 = %d\n", prev1, prev2);
+
+        if (luxReference != rBuffer[prev1])
+        {
+            Serial.println("Flicker calculation error: Reference lux changed.");
+            return;  // Skip if reference has lux changed
+        }
+        if (luxReference != rBuffer[prev2]) 
+        {
+            Serial.println("Flicker calculation error: Reference lux changed.");
+            return;  // Skip if reference has lux changed
+        }
+
         float diff1 = uBuffer[head] - uBuffer[prev1];
         float diff2 = uBuffer[prev1] - uBuffer[prev2];
+
+        Serial.printf("Flicker: diff1 = %f, diff2 = %f\n", diff1, diff2);
         
         if ((diff1 * diff2) < 0) {  // Sign change detected
+            Serial.println("Flicker: Sign change detected.");
             flickerSum += (abs(diff1) + abs(diff2));
         }
     }

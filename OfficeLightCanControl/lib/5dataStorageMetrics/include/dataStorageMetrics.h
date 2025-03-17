@@ -29,7 +29,7 @@ public:
     float getFlicker();
 
 private:
-    static const uint16_t BUFFER_SIZE = 6000; // 100 Hz * 60 seconds = 6000 samples
+    static const uint16_t BUFFER_SIZE = 6; // 100 Hz * 60 seconds = 6000 samples
     static const uint16_t SAMPLING_FREQ = 100; // 100 Hz
     static constexpr float LED_MAX_POWER = 0.099f; // Maximum power consumption in Watts Pmax = V_F × I_F = 3,3V × 30mA = 99mW
     

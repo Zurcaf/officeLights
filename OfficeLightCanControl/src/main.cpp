@@ -130,3 +130,45 @@ void calibrate_Gd()
     driver.setGainOffset(4.986404, 0.702457);
     
 }
+
+// if (current - previousMillis >= 2000)
+// {
+//     previousMillis = current;
+
+//     // Test Flicker 
+//     if (uncalibrated)
+//     {
+//         // insert debug values for testing
+//         metrics.insertValues(100, 100, reference, current);
+//         uncalibrated = false;
+//     }else
+//     {
+//         // insert debug values for testing
+//         metrics.insertValues(200, 100, reference, current);
+//         uncalibrated = true;
+//     }
+
+//     // Get buffer contents
+//     float uData[6000], yData[6000];
+//     int timestamps[6000];
+//     uint16_t count = metrics.getBuffer(uData, yData, timestamps);
+
+//     uint16_t elements = metrics.getBuffer(uData, yData, timestamps);
+
+//     // print the buffer contents
+//     for (uint16_t i = 0; i < elements; i++)
+//     {
+//         Serial.printf("Duty cycle: %f, Lux: %f, Timestamp: %d\n", uData[i], yData[i], timestamps[i]);
+//     }
+
+//     // Calculate energy consumption
+//     float energy = metrics.getEnergy();
+//     Serial.printf("Energy: %f\n", energy);
+
+//     // Calculate average visibility error
+//     float visibilityError = metrics.getVisibilityError();
+//     Serial.printf("Visibility error: %f\n", visibilityError);
+
+//     // Calculate average flicker
+//     float flicker = metrics.getFlicker();
+//     Serial.printf("Flicker: %f\n", flicker);

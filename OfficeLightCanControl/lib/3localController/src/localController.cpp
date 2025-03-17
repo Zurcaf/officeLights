@@ -2,14 +2,14 @@
 
 // Constructor initializing PID parameters with member initialization list
 localController::localController(
-    float h  = 1, float K  = 0.1, float b = 1, float c = 0, // Sampling period, proportional gain, setpoint weight in proportional
-    float Ti = 1, float Td = 0, float Tt = 10,
-    bool officeLightsMode = false,
-    float N = 10) // Integral time, derivative time, derivative filter coefficient
+    float h = 1, float K = 0.1, float b = 1, float c = 0,    // Sampling period, proportional gain, setpoint weight in proportional
+    float Ti = 1, float Td = 0, float Tt = 10, float N = 10, // Integral time, derivative time, derivative filter coefficient
+    bool integratorOnly = false, bool occupancy = false, bool feedback = true, bool antiWindup = true)  // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     : _h{h}, _K{K}, _b{b}, _c{c},
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
-      _officeLightsMode{officeLightsMode},
-      _N_{N},
+      _integratorOnly{integratorOnly}, _occupancy{occupancy}, 
+      _feedback{feedback}, _antiWindup{antiWindup},
+      _ _N_{N},
       _I{0.0}, _D{0.0}, _yOld{0.0},
       _r{0.0}, _y{0.0},
       _u{0.0}, _v{0.0},
@@ -30,7 +30,7 @@ localController::localController(
         _Tt = 10.0; // Default anti-windup time
     }
 
-    if (!officeLightsMode)
+    if (!integratorOnly)
     {
         _ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
         _bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
@@ -62,7 +62,7 @@ void localController::update_localController(float K, float b, float c,
     _Td = Td;
     _N_ = N;
 
-    if (!_officeLightsMode)
+    if (!_integratorOnly)
     {
         _ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
         _bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
@@ -79,7 +79,7 @@ void localController::update_reference(float r)
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
-    if (_officeLightsMode)
+    if (_integratorOnly)
     {
         _v = _r * _b + _I; // Total control output: sum of proportional, integral, and derivative terms
     }

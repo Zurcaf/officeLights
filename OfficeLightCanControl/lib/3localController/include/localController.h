@@ -15,13 +15,16 @@ private:
         _error, _dutyError, // Error and duty error (u-v)
         _k_x_b;             // Product of proportional gain and setpoint weight
 
-    bool _officeLightsMode; // Office lights mode flag makes (u = rb + I)
+    bool _integratorOnly; // Integrator only mode flag makes (u = rb + I)
+    bool _occupancy;      // Occupancy control mode flag
+    bool _feedback;        // Feedback control mode flag
+    bool _antiWindup;      // Anti-windup control mode flag
+
 public:
     localController(
-        float h, float K, float b , float c,     // Sampling period, proportional gain, setpoint weight in proportional
-        float Ti, float Td, float Tt,            // Integral time, derivative time, derivative filter coefficient
-        bool officeLightsMode, float N);         // Anti-windup gain, derivative filter coefficient
-    
+        float h, float K, float b, float c,                                   // Sampling period, proportional gain, setpoint weight in proportional
+        float Ti, float Td, float Tt, float N,                                // Integral time, derivative time, derivative filter coefficient
+        bool integratorOnly, bool occupancy, bool feedback, bool antiWindup); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     // Destructor
     ~localController();
 
@@ -39,6 +42,5 @@ public:
     // Update internal state (housekeeping) for the PID controller
     void housekeep(float y);
 };
-
 
 #endif // PID_H

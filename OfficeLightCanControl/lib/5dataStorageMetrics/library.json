@@ -1,7 +1,7 @@
 {
     "name": "dataStorageMetrics",
     "version": "1.0.0",
-    "description": "A library for imluminaire PID controler.",
+    "description": "A library for managing 1 minute circular buffers and metrics of LED.",
     "authors": [
         {
             "name": "Afonso Cruz",

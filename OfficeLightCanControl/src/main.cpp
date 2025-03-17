@@ -1,13 +1,6 @@
-#include <Arduino.h>
-#include "hardware/flash.h"
-
 #include <0configs.h>
-#include <luxmeter.h>
-#include <driver.h>
-#include <localController.h>
-#include <pcInterface.h>
-#include <dataStorageMetrics.h>
-#include <canRoutines.h>
+
+
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);

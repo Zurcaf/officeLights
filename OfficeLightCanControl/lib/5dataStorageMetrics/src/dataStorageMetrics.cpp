@@ -10,7 +10,7 @@ dataStorageMetrics::dataStorageMetrics() :
     visibilityError(0.0f),
     flickerSum(0.0f) {
     // Initialize buffers with zeros
-    for (uint16_t i = 0; i < BUFFER_SIZE; i++) {
+    for (uint16_t i = 0; i < STORAGE_BUFFER_SIZE; i++) {
         uBuffer[i] = 0.0f;
         yBuffer[i] = 0.0f;
         rBuffer[i] = 0.0f;
@@ -22,7 +22,7 @@ dataStorageMetrics::~dataStorageMetrics() {}
 
 void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float luxReference, int timestamp) {
     // Update buffer count
-    if (count < BUFFER_SIZE) {
+    if (count < STORAGE_BUFFER_SIZE) {
         count++;
     } else {
         isFull = true;
@@ -42,7 +42,7 @@ void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float 
 }
 
 uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, int* timestampsOut) {
-    uint16_t elements = isFull ? BUFFER_SIZE : count;
+    uint16_t elements = isFull ? STORAGE_BUFFER_SIZE : count;
     uint16_t current = isFull ? head : 0;
     
     for (uint16_t i = 0; i < elements; i++) {
@@ -69,15 +69,15 @@ float dataStorageMetrics::getFlicker() {
 }
 
 uint16_t dataStorageMetrics::incrementIndex(uint16_t idx) {
-    return (idx + 1) % BUFFER_SIZE;
+    return (idx + 1) % STORAGE_BUFFER_SIZE;
 }
 
 void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float luxReference, int timestamp) {
     // Energy calculation requires previous sample
     if (count > 1) {
-        uint16_t prevIdx = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;
+        uint16_t prevIdx = (head - 1 + STORAGE_BUFFER_SIZE) % STORAGE_BUFFER_SIZE;
         float timeDiff = (timestamp - timestampBuffer[prevIdx]) / 1000.0f;  // ms to s
-        energySum += dutyCycle[prevIdx] * timeDiff;                                  // Will be multiplied by LED_MAX_POWER later
+        energySum += uBuffer[prevIdx] * timeDiff;                                  // Will be multiplied by LED_MAX_POWER later
     }
 
     // Visibility error
@@ -86,8 +86,8 @@ void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float
 
     // Flicker calculation (requires at least 2 previous samples)
     if (count >= 2) {
-        uint16_t prev1 = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;        // Previous sample index (t-1)
-        uint16_t prev2 = (head - 2 + BUFFER_SIZE) % BUFFER_SIZE;        // Sample before previous (t-2)
+        uint16_t prev1 = (head - 1 + STORAGE_BUFFER_SIZE) % STORAGE_BUFFER_SIZE;        // Previous sample index (t-1)
+        uint16_t prev2 = (head - 2 + STORAGE_BUFFER_SIZE) % STORAGE_BUFFER_SIZE;        // Sample before previous (t-2)
 
         Serial.printf("Flicker: prev1 = %d, prev2 = %d\n", prev1, prev2);
 

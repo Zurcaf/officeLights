@@ -2,6 +2,14 @@
 #define HARDWARE_CONFIG_H
 
 #include <Arduino.h>
+#include "hardware/flash.h"
+
+#include <luxmeter.h>
+#include <driver.h>
+#include <localController.h>
+#include <pcInterface.h>
+#include <dataStorageMetrics.h>
+#include <canRoutines.h>
 
 // Pin Definitions
 #define LED_PIN 1

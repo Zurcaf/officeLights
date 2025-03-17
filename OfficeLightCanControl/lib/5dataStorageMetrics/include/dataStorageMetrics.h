@@ -29,15 +29,15 @@ public:
     float getFlicker();
 
 private:
-    static const uint16_t BUFFER_SIZE = 6; // 100 Hz * 60 seconds = 6000 samples
+    static const uint16_t STORAGE_BUFFER_SIZE = 6000; // 100 Hz * 60 seconds = 6000 samples
     static const uint16_t SAMPLING_FREQ = 100; // 100 Hz
     static constexpr float LED_MAX_POWER = 0.099f; // Maximum power consumption in Watts Pmax = V_F × I_F = 3,3V × 30mA = 99mW
     
     // Circular buffers for u (duty cycle) and y (lux values)
-    float uBuffer[BUFFER_SIZE];  // Duty cycle values (0 to 1)
-    float yBuffer[BUFFER_SIZE];  // Measured lux values
-    float rBuffer[BUFFER_SIZE];  // Reference lux values
-    int timestampBuffer[BUFFER_SIZE]; // Timestamps in milliseconds
+    float uBuffer[STORAGE_BUFFER_SIZE];  // Duty cycle values (0 to 1)
+    float yBuffer[STORAGE_BUFFER_SIZE];  // Measured lux values
+    float rBuffer[STORAGE_BUFFER_SIZE];  // Reference lux values
+    int timestampBuffer[STORAGE_BUFFER_SIZE]; // Timestamps in milliseconds
     
     uint16_t head;  // Points to next insertion position
     uint16_t count; // Number of valid elements in buffer

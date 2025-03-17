@@ -77,7 +77,7 @@ void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float
     if (count > 1) {
         uint16_t prevIdx = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;
         float timeDiff = (timestamp - timestampBuffer[prevIdx]) / 1000.0f;  // ms to s
-        energySum += dutyCycle * timeDiff;                                  // Will be multiplied by LED_MAX_POWER later
+        energySum += dutyCycle[prevIdx] * timeDiff;                                  // Will be multiplied by LED_MAX_POWER later
     }
 
     // Visibility error

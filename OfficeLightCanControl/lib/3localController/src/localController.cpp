@@ -9,7 +9,7 @@ localController::localController(
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
       _integratorOnly{integratorOnly}, _occupancy{occupancy}, 
       _feedback{feedback}, _antiWindup{antiWindup},
-      _ _N_{N},
+      _N_{N},
       _I{0.0}, _D{0.0}, _yOld{0.0},
       _r{0.0}, _y{0.0},
       _u{0.0}, _v{0.0},

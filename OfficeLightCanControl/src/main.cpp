@@ -32,7 +32,7 @@ LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-localController pidController(h, K, b, c, Ti, Td, Tt, integratorOnly, N);
+localController pidController(h, K, b, c, Ti, Td, Tt, N, integratorOnly, occupancy, feedback, antiWindup);
 
 // Data storage metrics instance~
 dataStorageMetrics metrics;

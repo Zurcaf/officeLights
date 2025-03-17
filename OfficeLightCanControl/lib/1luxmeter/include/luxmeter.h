@@ -22,9 +22,11 @@ public:
     float getLuxValue();
 
     // Helper method to update history and running sum
-    void updateMovingAverage(unsigned long currentMillis);
+    void updateMovingAverage();
 
     void calibrate_bm(unsigned long currentMillis, float dutuCycle);
+    
+    float filteredAdcValue;
 
 private:
     // Original Lux calculation parameters
@@ -42,23 +44,19 @@ private:
     uint8_t *_id;
 
     // Calibration parameters
-    float _m = 0;
-    float _b = 0;
+    float _m;
+    float _b;
 
     // Moving average parameters
     static constexpr int WINDOW_SIZE = 8;
-    float adcHistory[WINDOW_SIZE] = {0};
-    int historyIndex = 0;
-    float runningSum = 0.0f;
-    float filteredAdcValue = 0.0f;
+    float adcHistory[WINDOW_SIZE];
+    int historyIndex;
+    float runningSum;
 
-    // Timing control
-    unsigned long lastUpdateMillis = 0;
-    static constexpr unsigned long UPDATE_INTERVAL_MS = 2;
 
     // Outlier rejection parameters
     static constexpr float OUTLIER_THRESHOLD = 2.0f; // Multiplier for deviation from average
-    float runningVariance = 0.0f;                    // For calculating standard deviation
+    float runningVariance;                    // For calculating standard deviation
 
     // Lux value range
     static constexpr float MAX_LUX = 100000.0f;

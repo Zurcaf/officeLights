@@ -5,6 +5,15 @@ LuxMeter::LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange, int dacRan
     : _ldrPin(ldrPin), _vcc(vcc), _rFixed(rFixed), _adcRange(adcRange), _dacRange(dacRange)
     {
         VOLT_PER_UNIT = _vcc / _adcRange;
+        _m = 0;
+        _b = 0;
+
+        filteredAdcValue = 0;
+        for (int i = 0; i < WINDOW_SIZE; i++)
+            adcHistory[i] = 0;
+        historyIndex = 0;
+        runningSum = 0.0f;
+        runningVariance = 0.0f; 
     }
 
 bool LuxMeter::setCalibration(uint8_t* id) {
@@ -34,58 +43,46 @@ bool LuxMeter::setCalibration(uint8_t* id) {
 }
 
 std::tuple<float, float, float, float> LuxMeter::calculateAllValues() {
-    // 1. Take multiple samples for noise reduction
-    constexpr int SAMPLE_COUNT = 5;
-    constexpr int SAMPLE_DELAY_MS = 2;
-    uint32_t adcSum = 0;
+   
+    // 1. Convert to voltage with precalculated multiplier
+    float voltage = filteredAdcValue * VOLT_PER_UNIT;
     
-    // Accumulate samples
-    for (int i = 0; i < SAMPLE_COUNT; i++) {
-        adcSum += analogRead(_ldrPin);
-        if (i < SAMPLE_COUNT - 1) {
-            delayMicroseconds(SAMPLE_DELAY_MS * 1000);
-        }
-    }
-    
-    // 2. Calculate average ADC value
-    float avgAdc = static_cast<float>(adcSum) / SAMPLE_COUNT;
-    
-    // 3. Convert to voltage with precalculated multiplier
-    float voltage = avgAdc * VOLT_PER_UNIT;
-    
-    // 4. Handle invalid cases
+    // 2. Handle invalid cases
     if (voltage <= 0.001f) {  // Small threshold instead of 0
-        return std::make_tuple(avgAdc, voltage, -1.0f, 0.0f);
+        return std::make_tuple(filteredAdcValue, voltage, -1.0f, 0.0f);
     }
     
-    // 5. Optimize resistance calculation
+    // 3. Optimized resistance calculation
     float vRatio = _vcc / voltage;
     float resistance = _rFixed * (vRatio - 1.0f);
     
-    // 6. Calculate lux if resistance is valid
+    // 4. Calculate lux if resistance is valid
     float lux = 0.0f;
     if (resistance > 0.0f) {
         float logRes = log(resistance) / LN10;         // Convert to base 10
         lux = pow(10.0f, (logRes - _b) / _m);
     }
     
-    return std::make_tuple(avgAdc, voltage, resistance, lux);
+    return std::make_tuple(filteredAdcValue, voltage, resistance, lux);
 }
 
-float LuxMeter::getLuxValue() {
-    
+float LuxMeter::getLuxValue() 
+{
+    // 1. Convert to voltage with precalculated multiplier    
     float voltage = filteredAdcValue * VOLT_PER_UNIT;
     if (voltage <= 0.001f)
         return 0.0f;
-
+        
+    // 2. Optimized resistance calculation
     float resistance = _rFixed * ((_vcc / voltage) - 1.0f);
     if (resistance <= 0.0f)
         return 0.0f;
 
+    // 3. Calculate lux
     float logRes = log(resistance) / LN10;
     float lux = pow(10.0f, (logRes - _b) / _m);
 
-    // Clamp the lux value to a valid range
+    // 4. Clamp lux value to a valid range
     if (lux > MAX_LUX)
         return MAX_LUX;
     if (lux < MIN_LUX)
@@ -94,35 +91,21 @@ float LuxMeter::getLuxValue() {
     return lux;
 }
 
-void LuxMeter::updateMovingAverage(unsigned long currentMillis)
-{
-    if (currentMillis - lastUpdateMillis >= UPDATE_INTERVAL_MS)
-    {
-        int newAdcValue = analogRead(_ldrPin);
-        float currentAvg = (runningSum / WINDOW_SIZE);
+void LuxMeter::updateMovingAverage() {
+    int newAdcValue = analogRead(_ldrPin);
+    float currentAvg = (runningSum / WINDOW_SIZE);
 
-        // Calculate deviation from current average
+    if (historyIndex < WINDOW_SIZE) {  // Filling the window
+        updateHistory(newAdcValue);
+    } else {  // Window is full, apply outlier rejection
         float deviation = abs(newAdcValue - currentAvg);
-
-        // Simple initial case: accept first WINDOW_SIZE readings
-        if (historyIndex < WINDOW_SIZE && runningSum == 0)
-        {
+        float threshold = currentAvg * OUTLIER_THRESHOLD;
+        if (deviation <= threshold || threshold == 0) {
             updateHistory(newAdcValue);
         }
-        // Check if the new value is within acceptable range
-        else
-        {
-            // Use a simpler threshold-based approach initially
-            float threshold = currentAvg * OUTLIER_THRESHOLD; // e.g., 2x the average
-            if (deviation <= threshold || threshold == 0)
-            {
-                updateHistory(newAdcValue);
-            } // Else, skip this outlier
-        }
-        
-        filteredAdcValue = runningSum / WINDOW_SIZE;
-        lastUpdateMillis = currentMillis;
     }
+
+    filteredAdcValue = runningSum / WINDOW_SIZE;
 }
 
 void LuxMeter::updateHistory(int adcValue)

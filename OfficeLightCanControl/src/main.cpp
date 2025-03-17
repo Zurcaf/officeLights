@@ -12,19 +12,18 @@
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 
+// Initialize Driver
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-//                             h,    K,    b,   Ti,    Td,      N
-localController pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
+localController pidController(h, K, b, c, Ti, Td, Tt, officeLightsMode, N);
 
 // Data storage metrics instance~
 dataStorageMetrics metrics;
 
 bool unowned_rasp = true;
-bool uncalibrated = true;
 
-float setpoint = 3.0f; // Setpoint for PID control
+float setpoint = 30.0f; // Setpoint for PID control
 
 void setup()
 {
@@ -44,61 +43,57 @@ void setup()
         Serial.println("Unowned Raspberry Pi.");
         
     }
-    delay(3000);
+
+    calibrate_Gd();
+
+    Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
+
+    // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
+    pidController.update_reference(setpoint);
 }
 
 void loop()
 {
-    int current = millis();
-    float reference = 100.0f;
+    unsigned long currentMillis = millis();
 
-    // if (current > 8000)
-    // {
-    //     // change the reference value
-    //     reference = 200.0f;
-    // }
-
-    if (current - previousMillis >= 2000)
+    if (currentMillis > 14000)
     {
-        previousMillis = current;
+        setpoint = 3.0f;
+        pidController.update_reference(setpoint);
 
-        // Test Flicker 
-        if (uncalibrated)
-        {
-            // insert debug values for testing
-            metrics.insertValues(100, 100, reference, current);
-            uncalibrated = false;
-        }else
-        {
-            // insert debug values for testing
-            metrics.insertValues(200, 100, reference, current);
-            uncalibrated = true;
-        }
+    }
 
-        // Get buffer contents
-        float uData[6000], yData[6000];
-        int timestamps[6000];
-        uint16_t count = metrics.getBuffer(uData, yData, timestamps);
+    
+    if (currentMillis - LastUpdate_1000Hz >= FREQ_1000Hz)
+    {
+        LastUpdate_1000Hz = currentMillis;
 
-        uint16_t elements = metrics.getBuffer(uData, yData, timestamps);
+        // Get current lux value
+        luxMeter.updateMovingAverage();
+    }
 
-        // print the buffer contents
-        for (uint16_t i = 0; i < elements; i++)
-        {
-            Serial.printf("Duty cycle: %f, Lux: %f, Timestamp: %d\n", uData[i], yData[i], timestamps[i]);
-        }
+    if (currentMillis - LastUpdate_100Hz >= FREQ_100Hz)
+    {
+        LastUpdate_100Hz = currentMillis;
 
-        // Calculate energy consumption
-        float energy = metrics.getEnergy();
-        Serial.printf("Energy: %f\n", energy);
+        // Get the current lux value
+        float measuredLux = luxMeter.getLuxValue();
 
-        // Calculate average visibility error
-        float visibilityError = metrics.getVisibilityError();
-        Serial.printf("Visibility error: %f\n", visibilityError);
+        // Update PID controller
+        float dutyCycle = pidController.compute_control(); // Compute control output based on reference (r) and measured output (y)
 
-        // Calculate average flicker
-        float flicker = metrics.getFlicker();
-        Serial.printf("Flicker: %f\n", flicker);
+        // Set the duty cycle (0-100%) using the Driver
+        driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
+
+        pidController.housekeep(measuredLux); // Update internal state (housekeeping) for the PID controller
+
+        // debug output
+        // auto [adcValue, voltage, resistance, lux] = luxMeter.calculateAllValues();
+        // Serial.printf("ADC: %.2f, Voltage: %.2f, Resistance: %.2f, Lux: %.2f\n", adcValue, voltage, resistance, lux);
+
+        // Debug output
+        Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.4f%%\n",
+                      setpoint, measuredLux, dutyCycle);
     }
 }
 
@@ -111,23 +106,27 @@ void calibrate_Mb()
 
 void calibrate_Gd()
 {
-    // Get the 0% duty cycle lux value
-    driver.setDutyCycle(0);
-    delay(5000);
-    float lux = luxMeter.getLuxValue();
-    // Serial.printf("Lux: %f\n", lux);
+    // // Get the 0% duty cycle lux value
+    // driver.setDutyCycle(0);
+    // delay(5000);
+    // float lux = luxMeter.getLuxValue();
+    // // Serial.printf("Lux: %f\n", lux);
 
-    // Set the duty cycle to 70% and get the lux value
-    driver.setDutyCycle(0.7);
-    delay(5000);
-    float lux_70 = luxMeter.getLuxValue();
-    // Serial.printf("Lux 70: %f\n", lux_70);
+    // // Set the duty cycle to 70% and get the lux value
+    // driver.setDutyCycle(0.7);
+    // delay(5000);
+    // float lux_70 = luxMeter.getLuxValue();
+    // // Serial.printf("Lux 70: %f\n", lux_70);
 
-    // Calculate the gain and offset
-    float G = (lux_70 - lux) / 0.7;
-    float d = lux;
+    // // Calculate the gain and offset
+    // float G = (lux_70 - lux) / 0.7;
+    // float d = lux;
 
-    // Set the gain and offset
-    driver.setGainOffset(G, d);
-    // Serial.printf("G: %f, d: %f\n", G, d);
+    // // Set the gain and offset
+    // driver.setGainOffset(G, d);
+    // // Serial.printf("G: %f, d: %f\n", G, d);
+
+    delay(1000);
+    driver.setGainOffset(4.986404, 0.702457);
+    
 }

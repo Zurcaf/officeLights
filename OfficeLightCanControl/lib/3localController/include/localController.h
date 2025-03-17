@@ -18,7 +18,7 @@ private:
     bool _officeLightsMode; // Office lights mode flag makes (u = rb + I)
 public:
     localController(
-        float h, float K, float b , float c, // Sampling period, proportional gain, setpoint weight in proportional
+        float h, float K, float b , float c,     // Sampling period, proportional gain, setpoint weight in proportional
         float Ti, float Td, float Tt,            // Integral time, derivative time, derivative filter coefficient
         bool officeLightsMode, float N);         // Anti-windup gain, derivative filter coefficient
     
@@ -40,14 +40,5 @@ public:
     void housekeep(float y);
 };
 
-// Inline implementation of housekeep to update integral term and store previous output
-inline void localController::housekeep(float y)
-{
-    _y = y;                                // Store current output
-    _error = _r - y;                       // Error: difference between reference and measured output
-    _dutyError = _u - _v;                  // Compute duty error (difference between desired and actual output)
-    _I += _bi * _error + _ao * _dutyError; // Update integral term using proportional gain, sampling period, and integral time
-    _yOld = y;                             // Store current output as previous output for next iteration
-}
 
 #endif // PID_H

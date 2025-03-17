@@ -29,7 +29,7 @@ float Driver::calibrate_bm(unsigned long currentMillis)
 void Driver::setDutyCycle(float dutyCycle)
 {
     _dutyCycle = dutyCycle;
-    int writedutyCycle = (int) _dutyCycle * _dacRange;
+    int writedutyCycle = (int) (_dutyCycle * _dacRange);
     analogWrite(_ledPin, writedutyCycle);
 }
 

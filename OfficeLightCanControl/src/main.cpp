@@ -41,7 +41,6 @@ void setup()
     }
 
     calibrate_Gd();
-    
 
     Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
 
@@ -53,32 +52,38 @@ void loop()
 {
     unsigned long currentMillis = millis();
     
-    luxMeter.updateMovingAverage(currentMillis);
-
-
-    if (currentMillis - previousMillis >= PID_PERIOD)
+    if (currentMillis - LastUpdate_1000Hz >= FREQ_1000Hz)
     {
-        previousMillis = currentMillis;
+        LastUpdate_1000Hz = currentMillis;
 
         // Get current lux value
-        float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
+        luxMeter.updateMovingAverage();
+    }
+
+    if (currentMillis - LastUpdate_100Hz >= FREQ_100Hz)
+    {
+        LastUpdate_100Hz = currentMillis;
+
+        // Get the current lux value
+        float measuredLux = luxMeter.getLuxValue();
 
         // Update PID controller
-        float dutyCycle = pidController.compute_control();	// Compute control output based on reference (r) and measured output (y)
-        
+        float dutyCycle = pidController.compute_control(); // Compute control output based on reference (r) and measured output (y)
+
         // Set the duty cycle (0-100%) using the Driver
         driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
 
         pidController.housekeep(measuredLux); // Update internal state (housekeeping) for the PID controller
 
+        // debug output
+        // auto [adcValue, voltage, resistance, lux] = luxMeter.calculateAllValues();
+        // Serial.printf("ADC: %.2f, Voltage: %.2f, Resistance: %.2f, Lux: %.2f\n", adcValue, voltage, resistance, lux);
+
         // Debug output
-        Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
+        Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.4f%%\n",
                       setpoint, measuredLux, dutyCycle);
     }
-
-    delay(10);
 }
-
 
 void calibrate_Mb()
 {

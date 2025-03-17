@@ -19,7 +19,7 @@ Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 localController pidController(h, K, b, c, Ti, Td, Tt, officeLightsMode, N);
 bool unowned_rasp = true;
 
-float setpoint = 3.0f; // Setpoint for PID control
+float setpoint = 30.0f; // Setpoint for PID control
 
 void setup()
 {
@@ -51,6 +51,14 @@ void setup()
 void loop()
 {
     unsigned long currentMillis = millis();
+
+    if (currentMillis > 14000)
+    {
+        setpoint = 3.0f;
+        pidController.update_reference(setpoint);
+
+    }
+
     
     if (currentMillis - LastUpdate_1000Hz >= FREQ_1000Hz)
     {

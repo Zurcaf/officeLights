@@ -21,13 +21,15 @@ localController pidController(h, K, b, c, Ti, Td, Tt, officeLightsMode, N);
 // Data storage metrics instance~
 dataStorageMetrics metrics;
 
+pcInterface interface(1);  // Assign this Pico as desk ID 1
+
 bool unowned_rasp = true;
 
 float setpoint = 30.0f; // Setpoint for PID control
 
 void setup()
 {
-    Serial.begin(115200);
+    interface.begin(115200); // Start serial communication with PC
     analogReadResolution(12);
     analogWriteFreq(60000);
     analogWriteRange(DAC_RANGE);

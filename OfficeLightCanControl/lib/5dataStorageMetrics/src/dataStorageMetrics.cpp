@@ -1,4 +1,6 @@
 #include "dataStorageMetrics.h"
+#include <stdlib.h> // For abs()
+
 
 dataStorageMetrics::dataStorageMetrics() : 
     head(0), 
@@ -18,7 +20,7 @@ dataStorageMetrics::dataStorageMetrics() :
 
 dataStorageMetrics::~dataStorageMetrics() {}
 
-void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float luxReference, uint64_t timestamp) {
+void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float luxReference, int timestamp) {
     // Store values in buffers
     uBuffer[head] = dutyCycle;
     yBuffer[head] = luxMeasured;
@@ -37,7 +39,7 @@ void dataStorageMetrics::insertValues(float dutyCycle, float luxMeasured, float 
     }
 }
 
-uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, uint64_t* timestampsOut) {
+uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, int* timestampsOut) {
     uint16_t elements = isFull ? BUFFER_SIZE : count;
     uint16_t current = isFull ? head : 0;
     
@@ -50,20 +52,8 @@ uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, uint6
     return elements;
 }
 
-float dataStorageMetrics::getEnergy(float maxPower) {
-    if (count < 2) return 0.0f;
-    
-    float energy = 0.0f;
-    uint16_t elements = isFull ? BUFFER_SIZE : count;
-    uint16_t current = isFull ? incrementIndex(head) : 0;
-    
-    for (uint16_t i = 1; i < elements; i++) {
-        uint16_t prev = (current - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-        float timeDiff = (timestampBuffer[current] - timestampBuffer[prev]) / 1000.0f; // Convert ms to s
-        energy += maxPower * uBuffer[prev] * timeDiff;
-        current = incrementIndex(current);
-    }
-    return energy;
+float dataStorageMetrics::getEnergy() {
+    return energySum * LED_MAX_POWER;
 }
 
 float dataStorageMetrics::getVisibilityError() {
@@ -72,7 +62,7 @@ float dataStorageMetrics::getVisibilityError() {
 }
 
 float dataStorageMetrics::getFlicker() {
-    if (count == 0) return 0.0f;
+    if (count < 2) return 0.0f; // Flicker calculation requires at least 2 samples
     return flickerSum / count;
 }
 
@@ -80,12 +70,12 @@ uint16_t dataStorageMetrics::incrementIndex(uint16_t idx) {
     return (idx + 1) % BUFFER_SIZE;
 }
 
-void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float luxReference, uint64_t timestamp) {
+void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float luxReference, int timestamp) {
     // Energy calculation requires previous sample
-    if (count > 0) {
+    if (count > 1) {
         uint16_t prevIdx = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-        float timeDiff = (timestamp - timestampBuffer[prevIdx]) / 1000.0f; // ms to s
-        energySum += dutyCycle * timeDiff;  // Will be multiplied by P_max later
+        float timeDiff = (timestamp - timestampBuffer[prevIdx]) / 1000.0f;  // ms to s
+        energySum += dutyCycle * timeDiff;                                  // Will be multiplied by LED_MAX_POWER later
     }
 
     // Visibility error
@@ -94,8 +84,8 @@ void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float
 
     // Flicker calculation (requires at least 2 previous samples)
     if (count >= 2) {
-        uint16_t prev1 = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-        uint16_t prev2 = (head - 2 + BUFFER_SIZE) % BUFFER_SIZE;
+        uint16_t prev1 = (head - 1 + BUFFER_SIZE) % BUFFER_SIZE;        // Previous sample index (t-1)
+        uint16_t prev2 = (head - 2 + BUFFER_SIZE) % BUFFER_SIZE;        // Sample before previous (t-2)
         
         float diff1 = uBuffer[head] - uBuffer[prev1];
         float diff2 = uBuffer[prev1] - uBuffer[prev2];
@@ -104,4 +94,4 @@ void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float
             flickerSum += (abs(diff1) + abs(diff2));
         }
     }
-}||
+}

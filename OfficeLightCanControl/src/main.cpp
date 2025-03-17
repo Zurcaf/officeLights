@@ -18,6 +18,9 @@ Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 //                             h,    K,    b,   Ti,    Td,      N
 localController pidController(1.0f, 0.1f, 1.0f, 10.0f, 0.0f, 10.0f); // Default tuning (adjust as needed)
 
+// Data storage metrics instance~
+dataStorageMetrics metrics;
+
 bool unowned_rasp = true;
 bool uncalibrated = true;
 
@@ -39,57 +42,46 @@ void setup()
         Serial.printf("ID: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
                       id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7]);
         Serial.println("Unowned Raspberry Pi.");
-        delay(5000);
+        
     }
-
-    // Launch moving average task on Core 0
-    multicore_launch_core1(core1_task);
+    delay(3000);
 }
 
 void loop()
 {
-    if (uncalibrated)
+    int current = millis();
+
+    if (current - previousMillis >= 2000)
     {
-        calibrate_Gd();
-        uncalibrated = false;
+        previousMillis = current;
 
-        Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
-        delay(5000);
+        // insert debug values for testing
+        metrics.insertValues(0.5, 100, 100, current);
 
-        // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-        pidController.update_reference(setpoint);
-    }
+        // Get buffer contents
+        float uData[6000], yData[6000];
+        int timestamps[6000];
+        uint16_t count = metrics.getBuffer(uData, yData, timestamps);
 
-    // Get current lux value
-    float measuredLux = luxMeter.getLuxValue(); // Get current illuminance from LuxMeter
+        uint16_t elements = metrics.getBuffer(uData, yData, timestamps);
 
-    // Update PID controller
-    float dutyCycle = pidController.compute_control(measuredLux);
-
-    // Set the duty cycle (0-100%) using the Driver
-    driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
-
-    // Debug output
-    Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.1f%%\n",
-                  setpoint, measuredLux, dutyCycle);
-
-    delay(100); // Update every 100ms (adjust as needed for stability)
-}
-
-// Function to run on Core 0: Continuously update moving average
-void core1_task()
-{
-    while (true)
-    {
-        unsigned long currentMillis = millis();
-        if (currentMillis - previousMillis >= 10)
+        // print the buffer contents
+        for (uint16_t i = 0; i < elements; i++)
         {
-            previousMillis = currentMillis;
-            luxMeter.updateMovingAverage(currentMillis);
-            pidController.housekeep(luxMeter.getLuxValue());
+            Serial.printf("Duty cycle: %f, Lux: %f, Timestamp: %d\n", uData[i], yData[i], timestamps[i]);
         }
 
-        delay(1); // Small delay to prevent core from hogging resources
+        // Calculate energy consumption
+        float energy = metrics.getEnergy();
+        Serial.printf("Energy: %f\n", energy);
+
+        // Calculate average visibility error
+        float visibilityError = metrics.getVisibilityError();
+        Serial.printf("Visibility error: %f\n", visibilityError);
+
+        // Calculate average flicker
+        float flicker = metrics.getFlicker();
+        Serial.printf("Flicker: %f\n", flicker);
     }
 }
 

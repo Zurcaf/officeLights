@@ -2,6 +2,8 @@
 #define DATA_STORAGE_METRICS_H
 
 #include <stdint.h>
+#include <cstdlib>
+
 
 class dataStorageMetrics {
 public:
@@ -12,13 +14,13 @@ public:
     ~dataStorageMetrics();
 
     // Insert new values into the circular buffers
-    void insertValues(float dutyCycle, float luxMeasured, float luxReference, uint64_t timestamp);
+    void insertValues(float dutyCycle, float luxMeasured, float luxReference, int timestamp);
 
     // Get buffer contents (returns number of valid elements)
-    uint16_t getBuffer(float* dutyCycleOut, float* luxOut, uint64_t* timestampsOut);
+    uint16_t getBuffer(float* dutyCycleOut, float* luxOut, int* timestampsOut);
 
     // Calculate energy consumption (in Joules)
-    float getEnergy(float maxPower);
+    float getEnergy();
 
     // Calculate average visibility error (in LUX)
     float getVisibilityError();
@@ -29,12 +31,13 @@ public:
 private:
     static const uint16_t BUFFER_SIZE = 6000; // 100 Hz * 60 seconds = 6000 samples
     static const uint16_t SAMPLING_FREQ = 100; // 100 Hz
+    static constexpr float LED_MAX_POWER = 0.099f; // Maximum power consumption in Watts Pmax = V_F × I_F = 3,3V × 30mA = 99mW
     
     // Circular buffers for u (duty cycle) and y (lux values)
     float uBuffer[BUFFER_SIZE];  // Duty cycle values (0 to 1)
     float yBuffer[BUFFER_SIZE];  // Measured lux values
     float rBuffer[BUFFER_SIZE];  // Reference lux values
-    uint64_t timestampBuffer[BUFFER_SIZE]; // Timestamps in milliseconds
+    int timestampBuffer[BUFFER_SIZE]; // Timestamps in milliseconds
     
     uint16_t head;  // Points to next insertion position
     uint16_t count; // Number of valid elements in buffer
@@ -49,7 +52,7 @@ private:
     uint16_t incrementIndex(uint16_t idx);
 
     // Update metrics incrementally with each new sample
-    void updateMetrics(float dutyCycle, float luxMeasured, float luxReference, uint64_t timestamp);
+    void updateMetrics(float dutyCycle, float luxMeasured, float luxReference, int timestamp);
 };
 
 #endif // DATA_STORAGE_METRICS_H

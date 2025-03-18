@@ -1,0 +1,6 @@
+Classes
+- change format of inicialization and test not having values in Constructor
+- lower bounds (occupied and unoccupied)
+- antiwindup on/off
+- feedback on/off
+- freed forward implementation

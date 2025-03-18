@@ -2,10 +2,10 @@
 
 // Constructor initializing PID parameters with member initialization list
 localController::localController(
-    float h = 1, float K = 0.1, float b = 1, float c = 0,                                                                    // Sampling period, proportional gain, setpoint weight in proportional
+    float h = 1, float Tk = 0.1, float b = 1, float c = 0,                                                                   // Sampling period, proportional gain, setpoint weight in proportional
     float Ti = 1, float Td = 0, float Tt = 10, float N = 10,                                                                 // Integral time, derivative time, derivative filter coefficient
     bool integratorOnly = false, bool bumpLess = true, bool occupancy = false, bool feedback = true, bool antiWindup = true) // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
-    : _h{h}, _K{K}, _b{b}, _c{c},
+    : _h{h}, _Tk{Tk}, _b{b}, _c{c},
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
       _integratorOnly{integratorOnly}, _bumpLess{bumpLess}, _occupancy{occupancy},
       _feedback{feedback}, _antiWindup{antiWindup},
@@ -16,32 +16,7 @@ localController::localController(
       _error{0.0}, _dutyError{0.0},
       _bi{0.0}, _ad{0.0}, _bd{0.0}, _ao{0.0}
 {
-    // Prevent division by zero with safe fallbacks
-    if (_Td + _N_ * _h <= 0)
-    {
-        // assert(false && "Td + N * h must be positive"); // Debug check
-        _Td = 0.001; // Small positive default to avoid division by zero
-    }
-    if (_Ti <= 0)
-    {
-        // assert(false && "Ti must be positive"); // Debug check
-        _Ti = 1.0; // Default to a reasonable integral time
-    }
-    if (_Tt <= 0)
-    {
-        // assert(false && "Tt must be positive"); // Debug check
-        _Tt = 10.0; // Default anti-windup time
-    }
-
-    if (!integratorOnly)
-    {
-        _ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
-        _bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
-    }
-
-    _bi = _K * _h / _Ti; // Integral gain coefficient (b_i)
-    _ao = _h / _Tt;      // Anti-windup gain coefficient (a_o)
-    _k_x_b = _K * _b;    // Product of proportional gain and setpoint weight
+    constantCalc(); // Calculate the constants in the local controller
 }
 
 // Destructor (empty as no dynamic memory is managed)
@@ -52,15 +27,23 @@ localController::~localController()
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
+    // Compute the control signal based on the reference (r)
+    _v = _gain / (_r - _external);
+
+    if (!_feedback)
+    {
+        return _v; // Return the computed control signal
+    }
+
     if (_integratorOnly)
     {
-        _v = _r * _b + _I; // Total control output: sum of proportional, integral, and derivative terms
+        _v += _r * _b + _I; // Total control output: sum of proportional, integral, and derivative terms
     }
     else
     {
-        float _P = _k_x_b * _error;         // Proportional term: product of proportional gain and error
+        float P = _k_x_b * _error;         // Proportional term: product of proportional gain and error
         _D = _ad * _D - _bd * (_y - _yOld); // Update derivative term using filter and difference of outputs
-        _v = _P + _I + _D;                  // Total control output: sum of proportional, integral, and derivative terms
+        _v += P + _I + _D;                 // Total control output: sum of proportional, integral, and derivative terms
     }
 
     _u = _v; // Control output is the desired output
@@ -84,11 +67,10 @@ void localController::housekeep(float y)
     _yOld = y;                             // Store current output as previous output for next iteration
 }
 
-void localController::update_localController(float K, float b, float c,
+void localController::update_localController(float Tk, float b, float c,
                                              float Ti, float Td, float Tt, float N)
 {
-
-    float new_k_x_b = K * b;
+    float new_k_x_b = Tk * b;
 
     if (_bumpLess)
     {
@@ -97,7 +79,7 @@ void localController::update_localController(float K, float b, float c,
 
     _k_x_b = new_k_x_b; // Store current output as previous output for next iteration
 
-    _K = K;
+    _Tk = Tk;
     _b = b;
     _c = c;
     _Ti = Ti;
@@ -106,11 +88,48 @@ void localController::update_localController(float K, float b, float c,
 
     if (!_integratorOnly)
     {
-        _ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
-        _bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
+        _ad = _Td / (_Td + _N_ * _h);             // Derivative filter coefficient (a_d)
+        _bd = _Td * _Tk * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
     }
 
     _ao = _h / _Tt; // Anti-windup gain coefficient (a_o)
+}
+
+void localController::constantCalc()
+{
+    // Prevent division by zero with safe fallbacks
+    if (_Td + _N_ * _h <= 0)
+    {
+        Serial.println("Td + N * h must be positive. Setting Td to 0.001 to avoid division by zero.");
+        _Td = 0.001; // Small positive default to avoid division by zero
+    }
+    if (_Ti <= 0)
+    {
+        Serial.println("Ti must be positive. Setting Ti to 1.0 as default.");
+        _Ti = 1.0; // Default to a reasonable integral time
+    }
+    if (_Tt <= 0)
+    {
+        Serial.println("Tt must be positive. Setting Tt to 10.0 as default.");
+        _Tt = 10.0; // Default anti-windup time
+    }
+
+    if (!_integratorOnly)
+    {
+        _ad = _Td / (_Td + _N_ * _h);             // Derivative filter coefficient (a_d)
+        _bd = _Td * _Tk * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
+    }
+
+    _k_x_b = _Tk * _b;    // Product of proportional gain and setpoint weight
+    _bi = _Tk * _h / _Ti; // Integral gain coefficient (b_i)
+
+    _ao = _h / _Tt; // Anti-windup gain coefficient (a_o)
+}
+
+void localController::setGainAndExternal(float gain, float external)
+{
+    _gain = gain;         // Update the gain value
+    _external = external; // Update the reference value
 }
 
 void localController::setReference(float r)

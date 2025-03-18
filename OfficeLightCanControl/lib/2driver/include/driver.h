@@ -3,6 +3,14 @@
 
 #include <Arduino.h>
 
+// Driver class for controlling the LED
+// This class is responsible for controlling the LED brightness using PWM
+// and for calibrating the system using the b and m parameters.
+// Arguments:
+// ledPin: Pin number for the LED
+// dacRange: Range of the DAC (0-4095 for 12-bit resolution)
+// stepSize: Step size for calibration (0.1%)
+// interval: Time interval for calibration in milliseconds
 class Driver {
 private:
     int _ledPin;
@@ -13,7 +21,7 @@ private:
     float _dutyCycle;
     unsigned long _previousMillis;
 
-    
+
 
 public:
     // Constructor

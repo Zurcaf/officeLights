@@ -6,6 +6,21 @@
 #include <math.h>
 #include <tuple>
 
+// Luxmeter class definition
+// This class is responsible for reading the LDR sensor and calculating the lux value
+// It uses a moving average filter to smooth out the readings and applies calibration coefficients
+// based on the unique ID of the device
+// Arguments:
+// - ldrPin: Analog pin connected to the LDR sensor
+// - vcc: Supply voltage (default is 3.3V)
+// - rFixed: Fixed resistor value in the voltage divider (default is 10k ohm)
+// - adcRange: ADC range (default is 4096 for 12-bit ADC)
+// - dacRange: DAC range (default is 4096 for 12-bit DAC)
+// methods :
+// - setCalibration: Set calibration coefficients based on the unique ID of the device
+// - calculateAllValues: Calculate and return the filtered ADC value, voltage, resistance, and lux value
+// - getLuxValue: Get the lux value directly
+// - updateMovingAverage: Update the moving average of the ADC readings
 class LuxMeter
 {
 public:

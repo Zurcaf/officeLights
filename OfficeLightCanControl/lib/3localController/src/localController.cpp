@@ -2,10 +2,10 @@
 
 // Constructor initializing PID parameters with member initialization list
 localController::localController(
-    float h = 1, float Tk = 0.1, float b = 1, float c = 0,                                                                   // Sampling period, proportional gain, setpoint weight in proportional
-    float Ti = 1, float Td = 0, float Tt = 10, float N = 10,                                                                 // Integral time, derivative time, derivative filter coefficient
-    bool integratorOnly = false, bool bumpLess = true, bool occupancy = false, bool feedback = true, bool antiWindup = true) // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
-    : _h{h}, _Tk{Tk}, _b{b}, _c{c},
+    float h, float Tk, float b, float c,                                                                   // Sampling period, proportional gain, setpoint weight in proportional
+    float Ti, float Td, float Tt, float N,                                                                 // Integral time, derivative time, derivative filter coefficient
+    bool integratorOnly, bool bumpLess, bool occupancy, bool feedback, bool antiWindup) // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
+    : _h(h), _Tk{Tk}, _b{b}, _c{c},
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
       _integratorOnly{integratorOnly}, _bumpLess{bumpLess}, _occupancy{occupancy},
       _feedback{feedback}, _antiWindup{antiWindup},
@@ -16,7 +16,6 @@ localController::localController(
       _error{0.0}, _dutyError{0.0},
       _bi{0.0}, _ad{0.0}, _bd{0.0}, _ao{0.0}
 {
-    constantCalc(); // Calculate the constants in the local controller
 }
 
 // Destructor (empty as no dynamic memory is managed)
@@ -114,6 +113,15 @@ void localController::constantCalc()
         _Tt = 10.0; // Default anti-windup time
     }
 
+    if (_occupancy)
+    {
+        _r = _lowerBoundOccupied; // Set reference to lower bound if above threshold
+    }
+    else
+    {
+        _r = _lowerBoundUnoccupied; // Set reference to lower bound if below threshold
+    }
+
     if (!_integratorOnly)
     {
         _ad = _Td / (_Td + _N_ * _h);             // Derivative filter coefficient (a_d)
@@ -130,6 +138,8 @@ void localController::setGainAndExternal(float gain, float external)
 {
     _gain = gain;         // Update the gain value
     _external = external; // Update the reference value
+
+    constantCalc();      // Calculate the constants in the local controller
 }
 
 void localController::setReference(float r)
@@ -150,6 +160,14 @@ void localController::setBumpLess(bool bumpLess)
 void localController::setOccupancy(bool occupancy)
 {
     _occupancy = occupancy;
+    if (_occupancy)
+    {
+        _r = _lowerBoundOccupied; // Set reference to lower bound if above threshold
+    }
+    else
+    {
+        _r = _lowerBoundUnoccupied; // Set reference to lower bound if below threshold
+    }
 }
 
 void localController::setFeedback(bool feedback)
@@ -160,6 +178,18 @@ void localController::setFeedback(bool feedback)
 void localController::setAntiWindup(bool antiWindup)
 {
     _antiWindup = antiWindup;
+}
+
+// Set lower bound for occupied state
+void localController::setLowerBoundOccupied(float lowerBoundOccupied)
+{
+    _lowerBoundOccupied = lowerBoundOccupied; // Update the lower bound for occupied state
+}
+
+// Set lower bound for unoccupied state
+void localController::setLowerBoundUnoccupied(float lowerBoundUnoccupied)
+{
+    _lowerBoundUnoccupied = lowerBoundUnoccupied; // Update the lower bound for unoccupied state
 }
 
 bool localController::getReference()
@@ -190,4 +220,14 @@ bool localController::getFeedback()
 bool localController::getAntiWindup()
 {
     return _antiWindup;
+}
+
+float localController::getLowerBoundOccupied()
+{
+    return _lowerBoundOccupied;
+}
+
+float localController::getLowerBoundUnoccupied()
+{
+    return _lowerBoundUnoccupied;
 }

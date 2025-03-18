@@ -23,15 +23,15 @@ private:
     bool _occupancy;      // Occupancy control mode flag
     bool _feedback;        // Feedback control mode flag
     bool _antiWindup;      // Anti-windup control mode flag
-
-    float lowerBoundOccupied;
-    float lowerBoundUnoccupied;
+    
+    float _lowerBoundUnoccupied = 1.0f; // Lower bound for unoccupied state
+    float _lowerBoundOccupied = 5.0f; // Lower bound for occupied state
 
 public:
     localController(
-        float h, float K, float b, float c,                                   // Sampling period, proportional gain, setpoint weight in proportional
-        float Ti, float Td, float Tt, float N,                                // Integral time, derivative time, derivative filter coefficient
-        bool integratorOnly, bool bumpLess, bool occupancy, bool feedback, bool antiWindup); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
+        float h = 0.01, float Tk = 1.0, float b = 1.0, float c = 0.0,                                   // Sampling period, proportional gain, setpoint weight in proportional
+        float Ti = 2.0, float Td = 0.5, float Tt = 1.0, float N = 10.0,                                // Integral time, derivative time, derivative filter coefficient
+        bool integratorOnly = false, bool bumpLess = true, bool occupancy = false, bool feedback = true, bool antiWindup = true); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     // Destructor
     ~localController();
     
@@ -69,6 +69,12 @@ public:
     // Set anti-windup control mode
     void setAntiWindup(bool antiWindup);
 
+    // Set lower bound for occupied state
+    void setLowerBoundOccupied(float lowerBoundOccupied);
+    
+    // Set lower bound for unoccupied state
+    void setLowerBoundUnoccupied(float lowerBoundUnoccupied);
+
     // Get reference value
     bool getReference();
 
@@ -86,6 +92,12 @@ public:
 
     // Get anti-windup control mode
     bool getAntiWindup();
+
+    // Get lower bound for occupied state
+    float getLowerBoundOccupied();
+
+    // Get lower bound for unoccupied state
+    float getLowerBoundUnoccupied(); 
     
 };
 

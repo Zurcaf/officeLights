@@ -15,9 +15,7 @@
 #define LED_PIN 1
 #define LDR_PIN A0
 
-
-
-constexpr int FREQ_1000Hz = 2; // Sample period in miliseconds
+constexpr int FREQ_500Hz = 2; // Sample period in miliseconds
 constexpr int FREQ_100Hz = 10; // PID control period in miliseconds
 
 // ADC and DAC configurations
@@ -30,7 +28,6 @@ constexpr int interval = 6000;
 constexpr float STEP_SIZE = 0.1;
 
 // Function to run on Core 1: Continuously update moving average
-void core1_task();
 void calibrate_Mb ();
 void calibrate_Gd ();
 

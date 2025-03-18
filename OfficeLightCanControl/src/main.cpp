@@ -1,30 +1,31 @@
 #include <0configs.h>
 
 bool unowned_rasp = true;
-float setpoint = 3.0f; // Setpoint for PID control
+float reference = 3.0f; // Reference value for PID control
+float currentMillis; // Current time in milliseconds
 
 // ID of the device
 uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Time configurations
-unsigned long LastUpdate_1000Hz = 0;
+unsigned long LastUpdate_500Hz = 0;
 unsigned long LastUpdate_100Hz = 0;
 
 // Local controller configurations
-float h = 0.01;               // Sampling period: 10 ms (100 Hz). Reasonable for many systems (e.g., heaters, motors) and manageable on most microcontrollers.
-float K = 1.0;                // Proportional gain: Start low to ensure stability, increase if response is too slow.
-float b = 1.0;                // Setpoint weight (proportional): Full setpoint contribution, standard choice.
-float c = 0.0;                // Setpoint weight (derivative): No setpoint in derivative, avoids amplifying setpoint steps.
-float Ti = 2;                 // Integral time: 1 second, moderate integral action for steady-state error correction (adjust based on system time constant).
-float Td = 0.5;               // Derivative time: Start with 0 to avoid noise issues, add later (e.g., 0.1-0.25) if overshoot occurs.
-float Tt = 1.0;               // Anti-windup time: 2 seconds, faster than 100 s, balances windup recovery with stability.
-float N = 10.0;               // Derivative filter: Typical value, effective if Td > 0 is added later.
+float h = 0.01; // Sampling period: 10 ms (100 Hz). Reasonable for many systems (e.g., heaters, motors) and manageable on most microcontrollers.
+float K = 1.0;  // Proportional gain: Start low to ensure stability, increase if response is too slow.
+float b = 1.0;  // Setpoint weight (proportional): Full setpoint contribution, standard choice.
+float c = 0.0;  // Setpoint weight (derivative): No setpoint in derivative, avoids amplifying setpoint steps.
+float Ti = 2;   // Integral time: 1 second, moderate integral action for steady-state error correction (adjust based on system time constant).
+float Td = 0.5; // Derivative time: Start with 0 to avoid noise issues, add later (e.g., 0.1-0.25) if overshoot occurs.
+float Tt = 1.0; // Anti-windup time: 2 seconds, faster than 100 s, balances windup recovery with stability.
+float N = 10.0; // Derivative filter: Typical value, effective if Td > 0 is added later.
 
 bool integratorOnly = true; // Standard PID mode for general control.
-bool bumpLess = true;
+bool bumpLess = true;       // Bump-less mode
 bool occupancy = false;     // Occupancy control mode
-bool feedback = true; // Feedback control mode
-bool antiWindup = true; // Anti-windup control mode
+bool feedback = true;       // Feedback control mode
+bool antiWindup = true;     // Anti-windup control mode
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
@@ -33,7 +34,7 @@ LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-localController pidController(h, K, b, c, Ti, Td, Tt, N, integratorOnly, bumpLess, occupancy, feedback, antiWindup);
+localController pidController;
 
 // Data storage metrics instance~
 dataStorageMetrics metrics;
@@ -62,24 +63,13 @@ void setup()
     calibrate_Gd();
 
     Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
-
-    // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-    pidController.setReference(setpoint);
 }
 
 void loop()
 {
-    unsigned long currentMillis = millis();
-
-    if (currentMillis > 14000)
+    if (currentMillis - LastUpdate_500Hz >= FREQ_500Hz)
     {
-        setpoint = 3.0f;
-        pidController.setReference(setpoint);
-    }
-
-    if (currentMillis - LastUpdate_1000Hz >= FREQ_1000Hz)
-    {
-        LastUpdate_1000Hz = currentMillis;
+        LastUpdate_500Hz = currentMillis;
 
         // Get current lux value
         luxMeter.updateMovingAverage();
@@ -96,17 +86,17 @@ void loop()
         float dutyCycle = pidController.compute_control(); // Compute control output based on reference (r) and measured output (y)
 
         // Set the duty cycle (0-100%) using the Driver
-        driver.setDutyCycle(dutyCycle); // Convert percentage to 0-1 for Driver
+        driver.setDutyCycle(dutyCycle);
 
-        pidController.housekeep(measuredLux); // Update internal state (housekeeping) for the PID controller
+        // Update internal state (housekeeping) for the PID controller
+        pidController.housekeep(measuredLux); 
 
-        // debug output
-        // auto [adcValue, voltage, resistance, lux] = luxMeter.calculateAllValues();
-        // Serial.printf("ADC: %.2f, Voltage: %.2f, Resistance: %.2f, Lux: %.2f\n", adcValue, voltage, resistance, lux);
+         // Insert values into the metrics buffer
+        metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
 
         // Debug output
-        Serial.printf("Setpoint: %.1f lux, Measured: %.1f lux, Duty Cycle: %.4f%%\n",
-                      setpoint, measuredLux, dutyCycle);
+        Serial.printf("Reference: %.1f lux, Measured: %.1f lux, Duty Cycle: %.4f%%\n",
+                      reference, measuredLux, dutyCycle);
 
         // Check interface for incoming messages
         interface.processSerial();
@@ -146,7 +136,6 @@ void calibrate_Gd()
     driver.setGainOffset(4.986404, 0.702457);
 }
 
-
 // SAVED FROM OLD MAIN.CPP FILE for use buffer functions and calculations!!!
 // if (current - previousMillis >= 2000)
 // {
@@ -155,7 +144,7 @@ void calibrate_Gd()
 //     if (uncalibrated)
 //     {
 //         // insert debug values for testing
-//         metrics.insertValues(100, 100, reference, current);
+//         
 //         uncalibrated = false;
 //     }else
 //     {
@@ -163,10 +152,12 @@ void calibrate_Gd()
 //         metrics.insertValues(200, 100, reference, current);
 //         uncalibrated = true;
 //     }
+
 //     // Get buffer contents
 //     float uData[6000], yData[6000];
 //     int timestamps[6000];
 //     uint16_t count = metrics.getBuffer(uData, yData, timestamps);
+
 //     uint16_t elements = metrics.getBuffer(uData, yData, timestamps);
 //     // print the buffer contents
 //     for (uint16_t i = 0; i < elements; i++)

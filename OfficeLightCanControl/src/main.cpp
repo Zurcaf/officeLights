@@ -63,7 +63,7 @@ void setup()
     Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
 
     // After calibration, start PID control to maintain a setpoint (e.g., 3 lux)
-    pidController.update_reference(setpoint);
+    pidController.setReference(setpoint);
 }
 
 void loop()
@@ -73,7 +73,7 @@ void loop()
     if (currentMillis > 14000)
     {
         setpoint = 3.0f;
-        pidController.update_reference(setpoint);
+        pidController.setReference(setpoint);
     }
 
     if (currentMillis - LastUpdate_1000Hz >= FREQ_1000Hz)

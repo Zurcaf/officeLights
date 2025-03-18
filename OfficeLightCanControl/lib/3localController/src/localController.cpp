@@ -46,36 +46,6 @@ localController::~localController()
 {
 }
 
-void localController::update_localController(float K, float b, float c,
-                                             float Ti, float Td, float Tt,
-                                             float N)
-{
-    float new_k_x_b = K * b;
-
-    _I += _error * (_k_x_b - new_k_x_b); // Update integral term using proportional gain, sampling period, and integral time
-    _k_x_b = new_k_x_b;         // Store current output as previous output for next iteration
-
-    _K = K;
-    _b = b;
-    _c = c;
-    _Ti = Ti;
-    _Td = Td;
-    _N_ = N;
-
-    if (!_integratorOnly)
-    {
-        _ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
-        _bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
-    }
-
-    _ao = _h / _Tt;                          // Anti-windup gain coefficient (a_o)
-}
-
-void localController::update_reference(float r)
-{
-    _r = r;
-}
-
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
@@ -110,4 +80,79 @@ void localController::housekeep(float y)
     _dutyError = _u - _v;                  // Compute duty error (difference between desired and actual output)
     _I += _bi * _error + _ao * _dutyError; // Update integral term using proportional gain, sampling period, and integral time
     _yOld = y;                             // Store current output as previous output for next iteration
+}
+
+void localController::update_localController(float K, float b, float c,
+    float Ti, float Td, float Tt,
+    float N)
+{
+float new_k_x_b = K * b;
+
+_I += _error * (_k_x_b - new_k_x_b); // Update integral term using proportional gain, sampling period, and integral time
+_k_x_b = new_k_x_b;         // Store current output as previous output for next iteration
+
+_K = K;
+_b = b;
+_c = c;
+_Ti = Ti;
+_Td = Td;
+_N_ = N;
+
+if (!_integratorOnly)
+{
+_ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
+_bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
+}
+
+_ao = _h / _Tt;                          // Anti-windup gain coefficient (a_o)
+}
+
+void localController::setReference(float r)
+{
+_r = r;
+}
+
+void localController::setIntegratorOnly(bool integratorOnly)
+{
+    _integratorOnly = integratorOnly;
+}
+
+void localController::setOccupancy(bool occupancy)
+{
+    _occupancy = occupancy;
+}
+
+void localController::setFeedback(bool feedback)
+{
+    _feedback = feedback;
+}
+
+void localController::setAntiWindup(bool antiWindup)
+{
+    _antiWindup = antiWindup;
+}
+
+bool localController::getReference()
+{
+    return _r;
+}
+
+bool localController::getIntegratorOnly()
+{
+    return _integratorOnly;
+}
+
+bool localController::getOccupancy()
+{
+    return _occupancy;
+}
+
+bool localController::getFeedback()
+{
+    return _feedback;
+}
+
+bool localController::getAntiWindup()
+{
+    return _antiWindup;
 }

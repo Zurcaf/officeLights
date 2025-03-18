@@ -30,17 +30,44 @@ public:
 
     // Update PID parameters
     void update_localController(float K, float b, float c,
-                                float Ti, float Td, float Tt,
-                                float N);
-
-    // Update reference value
-    void update_reference(float r);
+                                float Ti, float Td, float Tt, float N);
 
     // Compute control output based on reference (r) and measured output (y)
     float compute_control();
 
     // Update internal state (housekeeping) for the PID controller
     void housekeep(float y);
+
+    // Update reference value
+    void setReference(float r);
+
+    // Set integrator only mode
+    void setIntegratorOnly(bool integratorOnly);
+    
+    // Set occupancy control mode
+    void setOccupancy(bool occupancy);
+
+    // Set feedback control mode
+    void setFeedback(bool feedback);
+
+    // Set anti-windup control mode
+    void setAntiWindup(bool antiWindup);
+
+    // Get reference value
+    bool getReference();
+
+    // Get integrator only mode
+    bool getIntegratorOnly();
+
+    // Get occupancy control mode
+    bool getOccupancy();
+
+    // Get feedback control mode
+    bool getFeedback();
+
+    // Get anti-windup control mode
+    bool getAntiWindup();
+    
 };
 
 #endif // PID_H

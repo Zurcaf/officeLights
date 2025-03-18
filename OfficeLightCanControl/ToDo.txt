@@ -1,6 +1,38 @@
 Classes
 - change format of inicialization and test not having values in Constructor
-- lower bounds (occupied and unoccupied)
-- antiwindup on/off
-- feedback on/off
-- freed forward implementation
+
+Controlador
+- lower bounds (occupied and unoccupied) makes the reference change to that
+
+Interface
+- make other classes avaiable to the interface (e.g. Controlador, etc.)
+- implement commands, fase1
+- implement commands, fase2
+- implement commands, fase3
+- implement commands, fase4
+- implement commands, fase5
+
+Energy calculation
+- Calculate Pmax
+
+Inicialization of PWM LED PIN OUTPUT function
+- Try to check for other currents in PICO to get more luminance in the LED
+
+Testes
+- test antiwindup on/off
+- test feedback on/off
+- test bumpLess on/off;
+
+- relate Gain with Tk (K = Tk / Gain)
+
+- afinar ganhos PID
+
+- que plots quero que sejam feitos?
+- plotar tudo;
+
+- testar envio de mensagens CAN um no para o outro;
+- criar tipos de mensagem e dar deskIDs and messageIDs para cada uma;
+- ACKs ?
+- criar mensagens de erro e de debug;
+- criar mensagens de status;
+

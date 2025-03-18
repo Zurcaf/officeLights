@@ -2,12 +2,12 @@
 
 // Constructor initializing PID parameters with member initialization list
 localController::localController(
-    float h = 1, float K = 0.1, float b = 1, float c = 0,    // Sampling period, proportional gain, setpoint weight in proportional
-    float Ti = 1, float Td = 0, float Tt = 10, float N = 10, // Integral time, derivative time, derivative filter coefficient
-    bool integratorOnly = false, bool occupancy = false, bool feedback = true, bool antiWindup = true)  // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
+    float h = 1, float K = 0.1, float b = 1, float c = 0,                                                                    // Sampling period, proportional gain, setpoint weight in proportional
+    float Ti = 1, float Td = 0, float Tt = 10, float N = 10,                                                                 // Integral time, derivative time, derivative filter coefficient
+    bool integratorOnly = false, bool bumpLess = true, bool occupancy = false, bool feedback = true, bool antiWindup = true) // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     : _h{h}, _K{K}, _b{b}, _c{c},
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
-      _integratorOnly{integratorOnly}, _occupancy{occupancy}, 
+      _integratorOnly{integratorOnly}, _bumpLess{bumpLess}, _occupancy{occupancy},
       _feedback{feedback}, _antiWindup{antiWindup},
       _N_{N},
       _I{0.0}, _D{0.0}, _yOld{0.0},
@@ -17,15 +17,18 @@ localController::localController(
       _bi{0.0}, _ad{0.0}, _bd{0.0}, _ao{0.0}
 {
     // Prevent division by zero with safe fallbacks
-    if (_Td + _N_ * _h <= 0) {
+    if (_Td + _N_ * _h <= 0)
+    {
         // assert(false && "Td + N * h must be positive"); // Debug check
         _Td = 0.001; // Small positive default to avoid division by zero
     }
-    if (_Ti <= 0) {
+    if (_Ti <= 0)
+    {
         // assert(false && "Ti must be positive"); // Debug check
         _Ti = 1.0; // Default to a reasonable integral time
     }
-    if (_Tt <= 0) {
+    if (_Tt <= 0)
+    {
         // assert(false && "Tt must be positive"); // Debug check
         _Tt = 10.0; // Default anti-windup time
     }
@@ -55,9 +58,9 @@ float localController::compute_control()
     }
     else
     {
-        float _P = _k_x_b *_error;               // Proportional term: product of proportional gain and error
+        float _P = _k_x_b * _error;         // Proportional term: product of proportional gain and error
         _D = _ad * _D - _bd * (_y - _yOld); // Update derivative term using filter and difference of outputs
-        _v = _P + _I + _D;                      // Total control output: sum of proportional, integral, and derivative terms
+        _v = _P + _I + _D;                  // Total control output: sum of proportional, integral, and derivative terms
     }
 
     _u = _v; // Control output is the desired output
@@ -67,7 +70,6 @@ float localController::compute_control()
         _u = 0;
     if (_v > 1)
         _u = 1;
-    
 
     return _u; // Return the computed control signal
 }
@@ -83,38 +85,47 @@ void localController::housekeep(float y)
 }
 
 void localController::update_localController(float K, float b, float c,
-    float Ti, float Td, float Tt,
-    float N)
+                                             float Ti, float Td, float Tt, float N)
 {
-float new_k_x_b = K * b;
 
-_I += _error * (_k_x_b - new_k_x_b); // Update integral term using proportional gain, sampling period, and integral time
-_k_x_b = new_k_x_b;         // Store current output as previous output for next iteration
+    float new_k_x_b = K * b;
 
-_K = K;
-_b = b;
-_c = c;
-_Ti = Ti;
-_Td = Td;
-_N_ = N;
+    if (_bumpLess)
+    {
+        _I += _error * (_k_x_b - new_k_x_b); // Update integral term using proportional gain, sampling period, and integral time
+    }
 
-if (!_integratorOnly)
-{
-_ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
-_bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
-}
+    _k_x_b = new_k_x_b; // Store current output as previous output for next iteration
 
-_ao = _h / _Tt;                          // Anti-windup gain coefficient (a_o)
+    _K = K;
+    _b = b;
+    _c = c;
+    _Ti = Ti;
+    _Td = Td;
+    _N_ = N;
+
+    if (!_integratorOnly)
+    {
+        _ad = _Td / (_Td + _N_ * _h);            // Derivative filter coefficient (a_d)
+        _bd = _Td * _K * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
+    }
+
+    _ao = _h / _Tt; // Anti-windup gain coefficient (a_o)
 }
 
 void localController::setReference(float r)
 {
-_r = r;
+    _r = r;
 }
 
 void localController::setIntegratorOnly(bool integratorOnly)
 {
     _integratorOnly = integratorOnly;
+}
+
+void localController::setBumpLess(bool bumpLess)
+{
+    _bumpLess = bumpLess;
 }
 
 void localController::setOccupancy(bool occupancy)
@@ -140,6 +151,11 @@ bool localController::getReference()
 bool localController::getIntegratorOnly()
 {
     return _integratorOnly;
+}
+
+bool localController::getBumpLess()
+{
+    return _bumpLess;
 }
 
 bool localController::getOccupancy()

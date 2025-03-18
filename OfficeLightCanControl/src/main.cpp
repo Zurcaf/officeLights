@@ -21,6 +21,7 @@ float Tt = 1.0;               // Anti-windup time: 2 seconds, faster than 100 s,
 float N = 10.0;               // Derivative filter: Typical value, effective if Td > 0 is added later.
 
 bool integratorOnly = true; // Standard PID mode for general control.
+bool bumpLess = true;
 bool occupancy = false;     // Occupancy control mode
 bool feedback = true; // Feedback control mode
 bool antiWindup = true; // Anti-windup control mode
@@ -32,7 +33,7 @@ LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
 Driver driver(LED_PIN, DAC_RANGE, STEP_SIZE, interval);
 
 // PID controller instance
-localController pidController(h, K, b, c, Ti, Td, Tt, N, integratorOnly, occupancy, feedback, antiWindup);
+localController pidController(h, K, b, c, Ti, Td, Tt, N, integratorOnly, bumpLess, occupancy, feedback, antiWindup);
 
 // Data storage metrics instance~
 dataStorageMetrics metrics;

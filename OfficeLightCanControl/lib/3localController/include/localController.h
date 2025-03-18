@@ -16,6 +16,7 @@ private:
         _k_x_b;             // Product of proportional gain and setpoint weight
 
     bool _integratorOnly; // Integrator only mode flag makes (u = rb + I)
+    bool _bumpLess;      // BumpLess mode flag
     bool _occupancy;      // Occupancy control mode flag
     bool _feedback;        // Feedback control mode flag
     bool _antiWindup;      // Anti-windup control mode flag
@@ -24,7 +25,7 @@ public:
     localController(
         float h, float K, float b, float c,                                   // Sampling period, proportional gain, setpoint weight in proportional
         float Ti, float Td, float Tt, float N,                                // Integral time, derivative time, derivative filter coefficient
-        bool integratorOnly, bool occupancy, bool feedback, bool antiWindup); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
+        bool integratorOnly, bool bumpLess, bool occupancy, bool feedback, bool antiWindup); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     // Destructor
     ~localController();
 
@@ -43,6 +44,9 @@ public:
 
     // Set integrator only mode
     void setIntegratorOnly(bool integratorOnly);
+
+    // Set BumpLess mode
+    void setBumpLess(bool bumpLess);
     
     // Set occupancy control mode
     void setOccupancy(bool occupancy);
@@ -58,6 +62,9 @@ public:
 
     // Get integrator only mode
     bool getIntegratorOnly();
+
+    // Get bumpLess mode
+    bool getBumpLess();
 
     // Get occupancy control mode
     bool getOccupancy();

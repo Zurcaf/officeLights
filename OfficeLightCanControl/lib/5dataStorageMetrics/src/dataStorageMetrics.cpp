@@ -54,6 +54,15 @@ uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, int* 
     return elements;
 }
 
+float dataStorageMetrics::getPowerConsumption() 
+{
+    float instantPower = 0.0f;
+    instantPower = uBuffer[head] * LED_MAX_POWER; // Convert duty cycle to percentage
+    Serial.printf("Duty cycle: %.2f, Instant power: %.2f\n", uBuffer[head], instantPower);
+    return instantPower;
+}
+    
+
 float dataStorageMetrics::getEnergy() {
     return energySum * LED_MAX_POWER;
 }

@@ -9,7 +9,7 @@ localController::localController(
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
       _integratorOnly{integratorOnly}, _bumpLess{bumpLess}, _occupancy{occupancy},
       _feedback{feedback}, _antiWindup{antiWindup},
-      _N_{N}, _gain{0.0}, _external{0.0},
+      _N_{N}, _gain{0.0}, _external{0.0}, _offset{0.0},
       _I{0.0}, _D{0.0}, _yOld{0.0},
       _r{0.0}, _y{0.0},
       _u{0.0}, _v{0.0},
@@ -28,9 +28,9 @@ localController::~localController()
 float localController::compute_control()
 {
     // Compute feedforward term
-    _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain
+    _v = (_r - _offset) / _gain; // Feedforward term: reference minus external illuminance divided by gain
 
-    Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
+    // Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
 
     if (!_feedback)
     {
@@ -64,7 +64,6 @@ float localController::compute_control()
 void localController::housekeep(float y)
 {
     _y = y;                                // Store current output
-    updateExternal();                  // Update the external illuminance
     _error = _r - y;                       // Error: difference between reference and measured output
     _dutyError = _u - _v;                  // Compute duty error (difference between desired and actual output)
     _I += _bi * _error + _ao * _dutyError; // Update integral term using proportional gain, sampling period, and integral time
@@ -137,13 +136,15 @@ void localController::constantCalc()
 void localController::updateExternal()
 {
     // Update the external illuminance
-    _external = _y -_gain * _u; // Calculate the external illuminance based on the measured output and control signal
+    _external = _y - (_gain * _u); // Calculate the external illuminance based on the measured output and control signal
+    // Serial.printf("External: %.2f, Gain: %.2f, Duty Cycle: %.2f, LDR: %.2f\n", _external, _gain, _u, _y); // Debug output
+
 }
 
-void localController::setGainAndExternal(float gain, float external)
+void localController::setGainAndExternal(float gain, float offset)
 {
     _gain = gain;         // Update the gain value
-    _external = external; // Update the reference value
+    _offset = offset; // Update the reference value
 
     _Tk *= 1/_gain; // Update the inverse of the gain value
 

@@ -200,64 +200,78 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
     }
     else if (tokens[1] == "v")
     {
-        sendResponse("v %d %.2f", myDeskId, desk.ldrVoltage);
+        // Get the LDR voltage value
+        sendResponse("v %d %.2f", myDeskId, luxMeter.getLdrVoltage());
     }
     else if (tokens[1] == "o")
     {
-        sendResponse("o %d %d", myDeskId, desk.occupancy);
+        // Get the occupancy status
+        sendResponse("o %d %d", myDeskId, controller.getOccupancy());
     }
     else if (tokens[1] == "a")
     {
-        sendResponse("a %d %d", myDeskId, desk.antiWindup);
+        // Get the anti-windup status
+        sendResponse("a %d %d", myDeskId, controller.getAntiWindup());
     }
     else if (tokens[1] == "f")
     {
-        sendResponse("f %d %d", myDeskId, desk.feedbackControl);
+        // Get the feedback control status
+        sendResponse("f %d %d", myDeskId, controller.getFeedback());
     }
     else if (tokens[1] == "d")
     {
-        sendResponse("d %d %.2f", myDeskId, desk.externalIlluminance);
+        // Get the external illuminance value
+        sendResponse("d %d %.2f", myDeskId, controller.getExternal());
     }
     else if (tokens[1] == "p")
     {
-        sendResponse("p %d %.2f", myDeskId, desk.powerConsumption);
+        // Get the power consumption value
+        sendResponse("p %d %.2f", myDeskId, dataSt.getPowerConsumption());
     }
     else if (tokens[1] == "t")
     {
-        sendResponse("t %d %.2f", myDeskId, desk.elapsedTime);
+        // Get the elapsed time value
+        unsigned long elapsedTime = millis();
+        sendResponse("t %d %.2f", myDeskId, elapsedTime / 1000.0f); // Convert to seconds
     }
     else if (tokens[1] == "E")
     {
-        sendResponse("E %d %.2f", myDeskId, desk.avgEnergy);
-        //     // Calculate energy consumption
-        //     float energy = metrics.getEnergy();
-        //     Serial.printf("Energy: %f\n", energy);
+        // Get the energy consumption value
+        sendResponse("E %d %.3f", myDeskId, dataSt.getEnergy());
     }
     else if (tokens[1] == "V")
     {
-        sendResponse("V %d %.2f", myDeskId, desk.avgVisibilityError);
-        //     // Calculate average visibility error
-        //     float visibilityError = metrics.getVisibilityError();
-        //     Serial.printf("Visibility error: %f\n", visibilityError);
+        // Get the visibility error value
+        sendResponse("V %d %.3f", myDeskId, dataSt.getVisibilityError());
     }
     else if (tokens[1] == "F")
     {
-        sendResponse("F %d %.2f", myDeskId, desk.avgFlickerError);
-        //     // Calculate average flicker
-        //     float flicker = metrics.getFlicker();
-        //     Serial.printf("Flicker: %f\n", flicker);
+        // Get the flicker error value
+        sendResponse("F %d %.6f", myDeskId, dataSt.getFlicker());
     }
     else if (tokens[1] == "O")
     {
-        sendResponse("O %d %.2f", myDeskId, desk.occupiedLowerBound);
+        // Get the occupied lower bound value
+        sendResponse("O %d %.2f", myDeskId, controller.getLowerBoundOccupied());
     }
     else if (tokens[1] == "U")
     {
-        sendResponse("U %d %.2f", myDeskId, desk.unoccupiedLowerBound);
+        // Get the unoccupied lower bound value
+        sendResponse("U %d %.2f", myDeskId, controller.getLowerBoundUnoccupied());
     }
     else if (tokens[1] == "L")
     {
-        sendResponse("L %d %.2f", myDeskId, desk.currentLowerBound);
+        // Get the current lower bound value
+        if (controller.getOccupancy())
+        {
+            controller.getLowerBoundOccupied();
+            sendResponse("O %d %.2f", myDeskId, controller.getLowerBoundOccupied());
+        }
+        else
+        {
+            controller.getLowerBoundUnoccupied();
+            sendResponse("U %d %.2f", myDeskId, controller.getLowerBoundUnoccupied());
+        }
     }
     else if (tokens[1] == "C")
     {
@@ -342,53 +356,119 @@ void pcInterface::executeSetCommand(std::vector<std::string> tokens)
     if (tokens[0] == "u")
     {
         float value = extractValue(tokens[2].c_str());
+
+        // Check if it's a special case for deactivating manual mode
+        if (value == -1.0f)
+        {
+            driver.setManualMode(false); // Set manual mode to false
+            sendResponse("ack - manual mode disabled");
+            return;
+        }
+        
+        // Check if the value is within the valid range
+        // Assuming the valid range is between 0.0 and 1.0 for duty cycle
+        if (value < 0.0f || value > 1.0f)
+        {
+            sendResponse("err - invalid duty cycle value %f", value);
+            return;
+        }
+
         driver.setManualMode(false); // Set manual mode to false
         driver.setDutyCycle(value);
         driver.setManualMode(true); // Set manual mode to true
         sendResponse("ack");
         return;
     }
-
     if (tokens[0] == "r")
     {
         float value = extractValue(tokens[2].c_str());
-        desk.illuminanceRef = value;
+        controller.setReference(value);
         sendResponse("ack");
         return;
     }
-
     if (tokens[0] == "o")
     {
         int value = atoi(tokens[2].c_str());
-        desk.occupancy = value;
+        if (value == 0)
+        {
+            controller.setOccupancy(false);
+        }
+        else if (value == 1)
+        {
+            controller.setOccupancy(true);
+        }
+        else
+        {
+            sendResponse("err - invalid occupancy value %d", value);
+            return;
+        }
         sendResponse("ack");
         return;
     }
     if (tokens[0] == "a")
     {
         int value = atoi(tokens[2].c_str());
-        desk.antiWindup = value;
+        if (value == 0)
+        {
+            controller.setAntiWindup(false);
+        }
+        else if (value == 1)
+        {
+            controller.setAntiWindup(true);
+        }
+        else
+        {
+            sendResponse("err - invalid anti-windup value %d", value);
+            return;
+        }
         sendResponse("ack");
         return;
     }
     if (tokens[0] == "f")
     {
         int value = atoi(tokens[2].c_str());
-        desk.feedbackControl = value;
+        if (value == 0)
+        {
+            controller.setFeedback(false);
+        }
+        else if (value == 1)
+        {
+            controller.setFeedback(true);
+        }
+        else
+        {
+            sendResponse("err - invalid feedback value %d", value);
+            return;
+        }
         sendResponse("ack");
         return;
     }
     if (tokens[0] == "O")
     {
         float value = extractValue(tokens[2].c_str());
-        desk.occupiedLowerBound = value;
+
+        // Check if the value is within the valid range
+        // Assuming the valid range is above 0.0 for lower bound occupied
+        if (value <= 0.0f)
+        {
+            sendResponse("err - invalid lower bound occupied value %f", value);
+            return;
+        }
+        controller.setLowerBoundOccupied(value);
         sendResponse("ack");
         return;
     }
     if (tokens[0] == "U")
     {
         float value = extractValue(tokens[2].c_str());
-        desk.unoccupiedLowerBound = value;
+        // Check if the value is within the valid range
+        // Assuming the valid range is above 0.0 for lower bound unoccupied
+        if (value <= 0.0f)
+        {
+            sendResponse("err - invalid lower bound unoccupied value %f", value);
+            return;
+        }
+        controller.setLowerBoundUnoccupied(value);
         sendResponse("ack");
         return;
     }

@@ -36,6 +36,9 @@ public:
     // Get lux value directly
     float getLuxValue();
 
+    // Get LDR voltage value
+    float getLdrVoltage();
+
     // Helper method to update history and running sum
     void updateMovingAverage();
 

@@ -91,6 +91,18 @@ float LuxMeter::getLuxValue()
     return lux;
 }
 
+float LuxMeter::getLdrVoltage() {
+    // 1. Convert to voltage with precalculated multiplier
+    float voltage = filteredAdcValue * VOLT_PER_UNIT;
+    
+    // 2. Handle invalid cases
+    if (voltage <= 0.001f) {
+        return 0.0f;
+    }
+    
+    return voltage;
+}
+
 void LuxMeter::updateMovingAverage() {
     int newAdcValue = analogRead(_ldrPin);
     float currentAvg = (runningSum / WINDOW_SIZE);

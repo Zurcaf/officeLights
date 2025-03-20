@@ -15,7 +15,7 @@ private:
         _bi, _ad, _bd, _ao, // Internal state variables
         _u, _v, _y,         // Desired output and output after saturation
         _error, _dutyError, // Error and duty error (u-v)
-        _gain, _external,
+        _gain, _external, _offset, // Gain and external illuminance and offset
         _k_x_b;             // Product of proportional gain and setpoint weight
 
     bool _integratorOnly; // Integrator only mode flag makes (u = rb + I)
@@ -51,7 +51,7 @@ public:
     void updateExternal();
 
     // Update box Gain and external Illuminace
-    void setGainAndExternal (float Gain, float External);
+    void setGainAndExternal (float Gain, float offset);
 
     // Update reference value
     void setReference(float r);
@@ -76,6 +76,9 @@ public:
     
     // Set lower bound for unoccupied state
     void setLowerBoundUnoccupied(float lowerBoundUnoccupied);
+
+    // Get external illuminance
+    float getExternal();
 
     // Get reference value
     float getReference();

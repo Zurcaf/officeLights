@@ -19,6 +19,9 @@ public:
     // Get buffer contents (returns number of valid elements)
     uint16_t getBuffer(float* dutyCycleOut, float* luxOut, int* timestampsOut);
 
+    // Get power consumption (in Watts)
+    float getPowerConsumption();
+
     // Calculate energy consumption (in Joules)
     float getEnergy();
 

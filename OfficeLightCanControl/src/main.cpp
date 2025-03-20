@@ -83,7 +83,7 @@ void loop()
         // Insert values into the metrics buffer
         metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
 
-        // // Debug output
+        // Debug output
         // Serial.printf("Reference: %.1f lux, Measured: %.1f lux, Duty Cycle: %.4f%%\n",
         //               reference, measuredLux, dutyCycle);
 

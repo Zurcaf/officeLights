@@ -30,7 +30,7 @@ private:
 public:
     localController(
         float h = 0.01, float Tk = 1.0, float b = 1.0, float c = 0.0,                                   // Sampling period, proportional gain, setpoint weight in proportional
-        float Ti = 2.0, float Td = 0.5, float Tt = 1.0, float N = 10.0,                                // Integral time, derivative time, derivative filter coefficient
+        float Ti = 1.0, float Td = 0.5, float Tt = 10.0, float N = 10.0,                                // Integral time, derivative time, derivative filter coefficient
         bool integratorOnly = false, bool bumpLess = true, bool occupancy = true, bool feedback = true, bool antiWindup = true); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     // Destructor
     ~localController();
@@ -82,7 +82,7 @@ public:
     float getDutyCycle();
 
     // Get reference value
-    bool getReference();
+    float getReference();
 
     // Get integrator only mode
     bool getIntegratorOnly();

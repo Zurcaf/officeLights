@@ -37,10 +37,6 @@ float localController::compute_control()
         return _u;
     }
 
-    Serial.println("h: " + String(_h) + ", Tk: " + String(_Tk) + ", b: " + String(_b) +
-                   ", c: " + String(_c) + ", Ti: " + String(_Ti) + ", Td: " + String(_Td) +
-                   ", Tt: " + String(_Tt) + ", N: " + String(_N_));
-
     // Compute feedforward term
     _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain
 
@@ -155,6 +151,8 @@ void localController::setGainAndExternal(float gain, float external)
     _gain = gain;         // Update the gain value
     _external = external; // Update the reference value
 
+    _Tk = 1/_gain; // Update the inverse of the gain value
+
     constantCalc(); // Calculate the constants in the local controller
 }
 
@@ -213,7 +211,7 @@ float localController::getDutyCycle()
     return _u;
 }
 
-bool localController::getReference()
+float localController::getReference()
 {
     return _r;
 }

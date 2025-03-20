@@ -1,7 +1,7 @@
 #include <0configs.h>
 
 bool unowned_rasp = true;
-float reference = 3.0f; // Reference value for PID control
+float reference; // Reference value for PID control
 float currentMillis; // Current time in milliseconds
 
 // ID of the device
@@ -77,6 +77,8 @@ void loop()
 
         // Update internal state (housekeeping) for the PID controller
         pidController.housekeep(measuredLux);
+
+        reference = pidController.getReference(); // Set the duty cycle in the PID controller
 
          // Insert values into the metrics buffer
         metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
@@ -167,10 +169,6 @@ void calibrate_Gd()
 
     driver.setDutyCycle(0); // Set the duty cycle to 0%
 
-
-    // delay(1000);
+    delay(1000);
     // driver.setGainOffset(4.986404, 0.702457);
 }
-
-// SAVED FROM OLD MAIN.CPP FILE for use buffer functions and calculations!!!
-

@@ -2,20 +2,21 @@
 
 // Constructor initializing PID parameters with member initialization list
 localController::localController(
-    float h, float Tk, float b, float c,                                                                   // Sampling period, proportional gain, setpoint weight in proportional
-    float Ti, float Td, float Tt, float N,                                                                 // Integral time, derivative time, derivative filter coefficient
+    float h, float Tk, float b, float c,                                                // Sampling period, proportional gain, setpoint weight in proportional
+    float Ti, float Td, float Tt, float N,                                              // Integral time, derivative time, derivative filter coefficient
     bool integratorOnly, bool bumpLess, bool occupancy, bool feedback, bool antiWindup) // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     : _h(h), _Tk{Tk}, _b{b}, _c{c},
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
       _integratorOnly{integratorOnly}, _bumpLess{bumpLess}, _occupancy{occupancy},
       _feedback{feedback}, _antiWindup{antiWindup},
-      _N_{N},
+      _N_{N}, _manualDuty{0.0}, _gain{0.0}, _external{0.0},
       _I{0.0}, _D{0.0}, _yOld{0.0},
       _r{0.0}, _y{0.0},
       _u{0.0}, _v{0.0},
       _error{0.0}, _dutyError{0.0},
       _bi{0.0}, _ad{0.0}, _bd{0.0}, _ao{0.0}
 {
+    constantCalc(); // Calculate the constants in the local controller
 }
 
 // Destructor (empty as no dynamic memory is managed)
@@ -26,12 +27,27 @@ localController::~localController()
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
-    // Compute the control signal based on the reference (r)
-    _v = _gain / (_r - _external);
+    // Is it a manual dutyCycle?
+    if (_manualDuty != 0)
+    {
+        Serial.println("Manual duty cycle set to: " + String(_manualDuty));
+        _v = _manualDuty; // Set control output to manual duty cycle
+        _u = _v;
+        
+        return _u;
+    }
+
+    Serial.println("h: " + String(_h) + ", Tk: " + String(_Tk) + ", b: " + String(_b) +
+                   ", c: " + String(_c) + ", Ti: " + String(_Ti) + ", Td: " + String(_Td) +
+                   ", Tt: " + String(_Tt) + ", N: " + String(_N_));
+
+    // Compute feedforward term
+    _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain
 
     if (!_feedback)
     {
-        return _v; // Return the computed control signal
+        _u = _v; // If feedback is disabled, set control output to feedforward term
+        return _u; // Return the computed control signal
     }
 
     if (_integratorOnly)
@@ -40,9 +56,9 @@ float localController::compute_control()
     }
     else
     {
-        float P = _k_x_b * _error;         // Proportional term: product of proportional gain and error
+        float P = _k_x_b * _error;          // Proportional term: product of proportional gain and error
         _D = _ad * _D - _bd * (_y - _yOld); // Update derivative term using filter and difference of outputs
-        _v += P + _I + _D;                 // Total control output: sum of proportional, integral, and derivative terms
+        _v += P + _I + _D;                  // Total control output: sum of proportional, integral, and derivative terms
     }
 
     _u = _v; // Control output is the desired output
@@ -83,15 +99,10 @@ void localController::update_localController(float Tk, float b, float c,
     _c = c;
     _Ti = Ti;
     _Td = Td;
+    _Tt = Tt;
     _N_ = N;
 
-    if (!_integratorOnly)
-    {
-        _ad = _Td / (_Td + _N_ * _h);             // Derivative filter coefficient (a_d)
-        _bd = _Td * _Tk * _N_ / (_Td + _N_ * _h); // Derivative gain coefficient (b_d)
-    }
-
-    _ao = _h / _Tt; // Anti-windup gain coefficient (a_o)
+    constantCalc(); // Calculate the constants in the local controller  
 }
 
 void localController::constantCalc()
@@ -134,12 +145,17 @@ void localController::constantCalc()
     _ao = _h / _Tt; // Anti-windup gain coefficient (a_o)
 }
 
+void localController::setDuty(float manualDuty)
+{
+    _manualDuty = manualDuty; // Set the control output to the manual duty cycle
+}
+
 void localController::setGainAndExternal(float gain, float external)
 {
     _gain = gain;         // Update the gain value
     _external = external; // Update the reference value
 
-    constantCalc();      // Calculate the constants in the local controller
+    constantCalc(); // Calculate the constants in the local controller
 }
 
 void localController::setReference(float r)
@@ -190,6 +206,11 @@ void localController::setLowerBoundOccupied(float lowerBoundOccupied)
 void localController::setLowerBoundUnoccupied(float lowerBoundUnoccupied)
 {
     _lowerBoundUnoccupied = lowerBoundUnoccupied; // Update the lower bound for unoccupied state
+}
+
+float localController::getDutyCycle()
+{
+    return _u;
 }
 
 bool localController::getReference()

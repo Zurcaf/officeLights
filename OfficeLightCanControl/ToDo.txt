@@ -6,6 +6,9 @@ Controlador
 
 Interface
 - make other classes avaiable to the interface (e.g. Controlador, etc.)
+
+
+
 - implement commands, fase1
 - implement commands, fase2
 - implement commands, fase3

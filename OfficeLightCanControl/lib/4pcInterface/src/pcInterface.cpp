@@ -1,6 +1,7 @@
 #include "pcInterface.h"
 
-pcInterface::pcInterface(uint8_t deskId) : myDeskId(deskId), bufferIndex(0)
+pcInterface::pcInterface(uint8_t deskId, localController& ctrl, dataStorageMetrics& storage)
+    : myDeskId(deskId), controller(ctrl), dataSt(storage)
 {
     // Initialize single desk state
     desk = {false, false, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false,
@@ -90,7 +91,7 @@ void pcInterface::parseCommand(const char *cmd)
     }
 
     // Check if the command is starting stream command
-    
+
     if (tokens[0] == "s" || tokens[0] == "S")
     {
         executeStreamCommand(tokens);
@@ -106,12 +107,12 @@ void pcInterface::parseCommand(const char *cmd)
 
     executeSetCommand(tokens);
 
-    Serial.printf("Command: %s\n", cmd);
-    Serial.printf("Token 1: %s\n", tokens[0].c_str());
-    Serial.printf("Token 2: %s\n", tokens[1].c_str());
-    Serial.printf("Token 3: %s\n", tokens[2].c_str());
-    Serial.printf("Token 4: %s\n", tokens[3].c_str());
-    Serial.printf("Token 5: %s\n", tokens[4].c_str());
+    // Serial.printf("Command: %s\n", cmd);
+    // Serial.printf("Token 1: %s\n", tokens[0].c_str());
+    // Serial.printf("Token 2: %s\n", tokens[1].c_str());
+    // Serial.printf("Token 3: %s\n", tokens[2].c_str());
+    // Serial.printf("Token 4: %s\n", tokens[3].c_str());
+    // Serial.printf("Token 5: %s\n", tokens[4].c_str());
 
     return;
 }
@@ -142,6 +143,15 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
         }
 
         ID = atoi(tokens[3].c_str());
+        //     float uData[6000], yData[6000];
+        //     int timestamps[6000];
+        //     uint16_t elements = metrics.getBuffer(uData, yData, timestamps);
+        //     // print the buffer contents
+        //     for (uint16_t i = 0; i < elements; i++)
+        //     {
+        //         Serial.printf("Duty cycle: %f, Lux: %f, Timestamp: %d\n", uData[i], yData[i], timestamps[i]);
+        //     }
+
         if (isNotValidID(ID))
         {
             sendResponse("err - invalid desk ID %d", ID);
@@ -177,7 +187,7 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
 
     if (tokens[1] == "u")
     {
-        sendResponse("u %d %.2f", myDeskId, desk.dutyCycle);
+        sendResponse("u %d %d\n", myDeskId, controller.getDutyCycle());
     }
     else if (tokens[1] == "r")
     {
@@ -218,14 +228,23 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
     else if (tokens[1] == "E")
     {
         sendResponse("E %d %.2f", myDeskId, desk.avgEnergy);
+        //     // Calculate energy consumption
+        //     float energy = metrics.getEnergy();
+        //     Serial.printf("Energy: %f\n", energy);
     }
     else if (tokens[1] == "V")
     {
         sendResponse("V %d %.2f", myDeskId, desk.avgVisibilityError);
+        //     // Calculate average visibility error
+        //     float visibilityError = metrics.getVisibilityError();
+        //     Serial.printf("Visibility error: %f\n", visibilityError);
     }
     else if (tokens[1] == "F")
     {
         sendResponse("F %d %.2f", myDeskId, desk.avgFlickerError);
+        //     // Calculate average flicker
+        //     float flicker = metrics.getFlicker();
+        //     Serial.printf("Flicker: %f\n", flicker);
     }
     else if (tokens[1] == "O")
     {
@@ -273,7 +292,7 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
         if (tokens[1] == "y")
         {
             desk.streaming_y = true;
-            sendResponse("s %d y %.2f time_in_millis!!", ID, desk.measuredIlluminance); //should be every 10 millis
+            sendResponse("s %d y %.2f time_in_millis!!", ID, desk.measuredIlluminance); // should be every 10 millis
         }
         else if (tokens[1] == "u")
         {
@@ -304,7 +323,6 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
     }
 }
 
-
 void pcInterface::executeSetCommand(std::vector<std::string> tokens)
 {
     if (tokens.size() != 3)
@@ -320,7 +338,6 @@ void pcInterface::executeSetCommand(std::vector<std::string> tokens)
         return;
     }
 
-    
     if (tokens[0] == "u")
     {
         float value = extractValue(tokens[2].c_str());

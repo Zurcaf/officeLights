@@ -13,7 +13,7 @@ private:
         _I, _D, _yOld,      // Integral term, derivative term, previous output
         _r,                 // Reference value
         _bi, _ad, _bd, _ao, // Internal state variables
-        _u, _v, _y,         // Desired output and output after saturation
+        _u, _manualDuty, _v, _y,         // Desired output and output after saturation
         _error, _dutyError, // Error and duty error (u-v)
         _gain, _external,
         _k_x_b;             // Product of proportional gain and setpoint weight
@@ -31,7 +31,7 @@ public:
     localController(
         float h = 0.01, float Tk = 1.0, float b = 1.0, float c = 0.0,                                   // Sampling period, proportional gain, setpoint weight in proportional
         float Ti = 2.0, float Td = 0.5, float Tt = 1.0, float N = 10.0,                                // Integral time, derivative time, derivative filter coefficient
-        bool integratorOnly = false, bool bumpLess = true, bool occupancy = false, bool feedback = true, bool antiWindup = true); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
+        bool integratorOnly = false, bool bumpLess = true, bool occupancy = true, bool feedback = true, bool antiWindup = true); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     // Destructor
     ~localController();
     
@@ -47,6 +47,9 @@ public:
 
     // Update internal state (housekeeping) for the PID controller
     void housekeep(float y);
+
+    // Set Duty manual
+    void setDuty(float _manualDuty);
 
     // Update box Gain and external Illuminace
     void setGainAndExternal (float Gain, float External);
@@ -74,6 +77,9 @@ public:
     
     // Set lower bound for unoccupied state
     void setLowerBoundUnoccupied(float lowerBoundUnoccupied);
+
+    // Get duty cycle
+    float getDutyCycle();
 
     // Get reference value
     bool getReference();

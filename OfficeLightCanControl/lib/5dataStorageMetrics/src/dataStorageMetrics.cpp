@@ -89,26 +89,26 @@ void dataStorageMetrics::updateMetrics(float dutyCycle, float luxMeasured, float
         uint16_t prev1 = (head - 1 + STORAGE_BUFFER_SIZE) % STORAGE_BUFFER_SIZE;        // Previous sample index (t-1)
         uint16_t prev2 = (head - 2 + STORAGE_BUFFER_SIZE) % STORAGE_BUFFER_SIZE;        // Sample before previous (t-2)
 
-        Serial.printf("Flicker: prev1 = %d, prev2 = %d\n", prev1, prev2);
+        // Serial.printf("Flicker: prev1 = %d, prev2 = %d\n", prev1, prev2);
 
         if (luxReference != rBuffer[prev1])
         {
-            Serial.println("Flicker calculation error: Reference lux changed.");
+            // Serial.println("Flicker calculation error: Reference lux changed.");
             return;  // Skip if reference has lux changed
         }
         if (luxReference != rBuffer[prev2]) 
         {
-            Serial.println("Flicker calculation error: Reference lux changed.");
+            // Serial.println("Flicker calculation error: Reference lux changed.");
             return;  // Skip if reference has lux changed
         }
 
         float diff1 = uBuffer[head] - uBuffer[prev1];
         float diff2 = uBuffer[prev1] - uBuffer[prev2];
 
-        Serial.printf("Flicker: diff1 = %f, diff2 = %f\n", diff1, diff2);
+        // Serial.printf("Flicker: diff1 = %f, diff2 = %f\n", diff1, diff2);
         
         if ((diff1 * diff2) < 0) {  // Sign change detected
-            Serial.println("Flicker: Sign change detected.");
+            // Serial.println("Flicker: Sign change detected.");
             flickerSum += (abs(diff1) + abs(diff2));
         }
     }

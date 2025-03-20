@@ -6,12 +6,14 @@
 #include <string>    // For std::string
 #include <sstream>   // For std::stringstream
 #include <vector>    // For std::vector
+#include <localController.h>  // Include localController header
+#include <dataStorageMetrics.h> // Include 
 
 #define BUFFER_SIZE 64
 
 class pcInterface {
 public:
-    pcInterface(uint8_t deskId);  // Constructor takes desk ID
+    pcInterface(uint8_t deskId, localController& ctrl, dataStorageMetrics& storage); // Constructor
     void begin(uint32_t baudRate);
     void processSerial();
 
@@ -53,6 +55,8 @@ private:
     std::vector<int> listIds;       // List of all desk IDs in the system
 
     DeskState desk;                 // Single desk state
+    localController& controller;  // Store reference to existing localController    
+    dataStorageMetrics& dataSt; // Store reference to existing dataStorageMetrics
 
     char commandBuffer[BUFFER_SIZE];
     uint8_t bufferIndex;

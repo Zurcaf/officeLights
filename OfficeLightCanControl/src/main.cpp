@@ -1,7 +1,7 @@
 #include <0configs.h>
 
 bool unowned_rasp = true;
-float reference; // Reference value for PID control
+float reference;     // Reference value for PID control
 float currentMillis; // Current time in milliseconds
 
 // ID of the device
@@ -10,7 +10,6 @@ uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 // Time configurations
 unsigned long LastUpdate_500Hz = 0;
 unsigned long LastUpdate_100Hz = 0;
-
 
 // Initialize LuxMeter
 LuxMeter luxMeter(LDR_PIN, Vcc, R_fixed, ADC_RANGE, DAC_RANGE);
@@ -80,7 +79,7 @@ void loop()
 
         reference = pidController.getReference(); // Set the duty cycle in the PID controller
 
-         // Insert values into the metrics buffer
+        // Insert values into the metrics buffer
         metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
 
         // Debug output
@@ -103,12 +102,26 @@ void calibrate_Gd()
 {
     float lux_0 = 0.0f; // Initialize lux value
     float lux_1 = 0.0f; // Initialize lux value
-    bool luxMeterReady = false; // Flag to indicate if the lux meter is ready
+    float G = 0.0f;     // Gain value
+    float d = 0.0f;     // Offset value
+
+    bool calibrated = false; // Flag to indicate if the lux meter is ready
+
+    bool duty0calibrated = false; // Flag to indicate if the duty cycle is set to 0%
+    bool duty1calibrated = false; // Flag to indicate if the duty cycle is set to 100%
+
+    int prevCalibrationTryCounter = 0; // Previous calibration attempt counter
+    int calibrationTryCounter = 0; // Counter for calibration attempts
+    int calibrationTryMax = 5;     // Maximum number of calibration attempts
+
+    int startTime = 0; // Start time for calibration
+
+    int calibrateInterval = 2500; // Calibration time in milliseconds
 
     // Get the 0% duty cycle lux value
     driver.setDutyCycle(0);
 
-    while (!luxMeterReady)
+    while (!calibrated)
     {
         currentMillis = millis(); // Get the current time in milliseconds
 
@@ -121,54 +134,57 @@ void calibrate_Gd()
             luxMeter.updateMovingAverage();
         }
 
-        if(currentMillis > 2000)
+        if (currentMillis >= (3*calibrateInterval*calibrationTryCounter) + calibrateInterval && !duty0calibrated)
         {
+            // Get the lux value at 0% duty cycle
             lux_0 = luxMeter.getLuxValue();
             Serial.printf("Lux_0: %f\n", lux_0);
 
-            luxMeterReady = true; // Set the flag to true to exit the loop
-        }
-    }
+            // Set the duty cycle to 100%
+            driver.setDutyCycle(1);
 
-    // Set the duty cycle to 70% and get the lux value
-    driver.setDutyCycle(1);
-
-    luxMeterReady = false; // Reset the flag for the next measurement
-
-    while (!luxMeterReady)
-    {
-        currentMillis = millis(); // Get the current time in milliseconds
-
-        // Wait for the lux meter to be ready
-        if (currentMillis - LastUpdate_500Hz >= FREQ_500Hz)
-        {
-            LastUpdate_500Hz = currentMillis;
-
-            // Get current lux value
-            luxMeter.updateMovingAverage();
+            duty0calibrated = true; // Set the flag to true to exit the loop
         }
 
-        if(currentMillis > 4000)
+        if (currentMillis > (3*calibrateInterval*calibrationTryCounter) + 2 * calibrateInterval && !duty1calibrated)
         {
+            // Get the lux value at 100% duty cycle
             lux_1 = luxMeter.getLuxValue();
             Serial.printf("Lux_1: %f\n", lux_1);
 
-            luxMeterReady = true; // Set the flag to true to exit the loop
+            // Calculate the gain and offset
+            G = lux_1 - lux_0;
+            d = lux_0;
+
+            driver.setDutyCycle(0); // Set the duty cycle to 0%
+
+            if (G <= 0.0f)
+            {
+                calibrationTryCounter++; // Increment the calibration attempt counter
+                Serial.println("Calibration failed. Retrying...");
+
+                duty0calibrated = false; // Reset the flag for the next attempt
+                duty1calibrated = false; // Reset the flag for the next attempt
+            }
+            else
+            {
+                duty1calibrated = true; // Set the flag to true to exit the loop
+            }
+        }
+
+        if (currentMillis >= (3 * calibrateInterval * calibrationTryCounter) + 3 * calibrateInterval)
+        {
+            if (duty1calibrated)
+            {
+                // Set the gain and offset
+                driver.setGainOffset(G, d);
+                pidController.setGainAndExternal(G, d); // Set the gain and external illuminance in the controller
+
+                calibrated = true; // Set the flag to true to exit the loop
+            }
         }
     }
 
-    // Calculate the gain and offset
-    float G = lux_1 - lux_0;
-    float d = lux_0;
-
-    // Set the gain and offset
-    driver.setGainOffset(G, d);
-    pidController.setGainAndExternal(G, d); // Set the gain and external illuminance in the controller
-
-    // Serial.printf("G: %f, d: %f\n", G, d);
-
-    driver.setDutyCycle(0); // Set the duty cycle to 0%
-
-    delay(1000);
-    // driver.setGainOffset(4.986404, 0.702457);
+    // Overwrite the gain and offset in the driver for debugging purposes (real values already precalibrated to not waist time)
+    // driver.setGainOffset(17.970798, 2.081886);
 }

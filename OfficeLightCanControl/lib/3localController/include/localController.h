@@ -13,7 +13,7 @@ private:
         _I, _D, _yOld,      // Integral term, derivative term, previous output
         _r,                 // Reference value
         _bi, _ad, _bd, _ao, // Internal state variables
-        _u, _manualDuty, _v, _y,         // Desired output and output after saturation
+        _u, _v, _y,         // Desired output and output after saturation
         _error, _dutyError, // Error and duty error (u-v)
         _gain, _external,
         _k_x_b;             // Product of proportional gain and setpoint weight
@@ -48,8 +48,7 @@ public:
     // Update internal state (housekeeping) for the PID controller
     void housekeep(float y);
 
-    // Set Duty manual
-    void setDuty(float _manualDuty);
+    void updateExternal();
 
     // Update box Gain and external Illuminace
     void setGainAndExternal (float Gain, float External);
@@ -77,9 +76,6 @@ public:
     
     // Set lower bound for unoccupied state
     void setLowerBoundUnoccupied(float lowerBoundUnoccupied);
-
-    // Get duty cycle
-    float getDutyCycle();
 
     // Get reference value
     float getReference();

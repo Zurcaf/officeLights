@@ -9,7 +9,7 @@ localController::localController(
       _Ti{Ti}, _Td{Td}, _Tt{Tt},
       _integratorOnly{integratorOnly}, _bumpLess{bumpLess}, _occupancy{occupancy},
       _feedback{feedback}, _antiWindup{antiWindup},
-      _N_{N}, _manualDuty{0.0}, _gain{0.0}, _external{0.0},
+      _N_{N}, _gain{0.0}, _external{0.0},
       _I{0.0}, _D{0.0}, _yOld{0.0},
       _r{0.0}, _y{0.0},
       _u{0.0}, _v{0.0},
@@ -27,18 +27,10 @@ localController::~localController()
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
-    // Is it a manual dutyCycle?
-    if (_manualDuty != 0)
-    {
-        Serial.println("Manual duty cycle set to: " + String(_manualDuty));
-        _v = _manualDuty; // Set control output to manual duty cycle
-        _u = _v;
-        
-        return _u;
-    }
-
     // Compute feedforward term
     _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain
+
+    Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
 
     if (!_feedback)
     {
@@ -72,6 +64,7 @@ float localController::compute_control()
 void localController::housekeep(float y)
 {
     _y = y;                                // Store current output
+    updateExternal();                  // Update the external illuminance
     _error = _r - y;                       // Error: difference between reference and measured output
     _dutyError = _u - _v;                  // Compute duty error (difference between desired and actual output)
     _I += _bi * _error + _ao * _dutyError; // Update integral term using proportional gain, sampling period, and integral time
@@ -141,9 +134,10 @@ void localController::constantCalc()
     _ao = _h / _Tt; // Anti-windup gain coefficient (a_o)
 }
 
-void localController::setDuty(float manualDuty)
+void localController::updateExternal()
 {
-    _manualDuty = manualDuty; // Set the control output to the manual duty cycle
+    // Update the external illuminance
+    _external = _y -_gain * _u; // Calculate the external illuminance based on the measured output and control signal
 }
 
 void localController::setGainAndExternal(float gain, float external)
@@ -206,9 +200,10 @@ void localController::setLowerBoundUnoccupied(float lowerBoundUnoccupied)
     _lowerBoundUnoccupied = lowerBoundUnoccupied; // Update the lower bound for unoccupied state
 }
 
-float localController::getDutyCycle()
+float localController::getExternal()
 {
-    return _u;
+    updateExternal(); // Update the external illuminance value
+    return _external; // Return the gain value
 }
 
 float localController::getReference()

@@ -1,7 +1,7 @@
 #include "pcInterface.h"
 
-pcInterface::pcInterface(uint8_t deskId, localController& ctrl, dataStorageMetrics& storage)
-    : myDeskId(deskId), controller(ctrl), dataSt(storage)
+pcInterface::pcInterface(uint8_t deskId, LuxMeter& luxM, Driver& driv, localController& ctrl, dataStorageMetrics& storage)
+    : myDeskId(deskId),luxMeter(luxM), driver(driv), controller(ctrl), dataSt(storage)
 {
     // Initialize single desk state
     desk = {false, false, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false,
@@ -20,14 +20,14 @@ void pcInterface::begin(uint32_t baudRate)
         delay(10);
     }
 
-    sendResponse("Desk %d initialized", myDeskId); // Debug: Confirm initialization
+    // sendResponse("Desk %d initialized", myDeskId); // Debug: Confirm initialization
 }
 
 void pcInterface::processSerial()
 {
     if (Serial.available())
     {
-        sendResponse("Serial data available"); // Debug: Confirm data is received
+        // sendResponse("Serial data available"); // Debug: Confirm data is received
     }
     while (Serial.available())
     {
@@ -37,7 +37,7 @@ void pcInterface::processSerial()
             commandBuffer[bufferIndex] = '\0';
             if (bufferIndex > 0)
             {
-                sendResponse("Received: %s", commandBuffer); // Debug: Show received command
+                sendResponse("Received: %s\n", commandBuffer); // Debug: Show received command
                 parseCommand(commandBuffer);
                 // Clear the buffer
                 for (uint8_t i = 0; i < BUFFER_SIZE; i++)
@@ -159,6 +159,7 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
         }
         if (tokens[2] == "u")
         {
+
             sendResponse("u %d %.2f", ID, desk.dutyCycle);
         }
         else if (tokens[2] == "y")
@@ -177,7 +178,6 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
         return;
     }
 
-    //
     ID = atoi(tokens[2].c_str());
     if (isNotValidID(ID))
     {
@@ -187,15 +187,16 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
 
     if (tokens[1] == "u")
     {
-        sendResponse("u %d %d\n", myDeskId, controller.getDutyCycle());
+        sendResponse("u %d %.2f", myDeskId, driver.getDutyCycle());
     }
     else if (tokens[1] == "r")
     {
-        sendResponse("r %d %.2f", myDeskId, desk.illuminanceRef);
+        sendResponse("r %d %.2f", myDeskId, controller.getReference());
     }
     else if (tokens[1] == "y")
     {
-        sendResponse("y %d %.2f", myDeskId, desk.measuredIlluminance);
+        // Get the measured illuminance value
+        sendResponse("y %d %.2f", myDeskId, luxMeter.getLuxValue());
     }
     else if (tokens[1] == "v")
     {
@@ -341,7 +342,9 @@ void pcInterface::executeSetCommand(std::vector<std::string> tokens)
     if (tokens[0] == "u")
     {
         float value = extractValue(tokens[2].c_str());
-        desk.dutyCycle = value;
+        driver.setManualMode(false); // Set manual mode to false
+        driver.setDutyCycle(value);
+        driver.setManualMode(true); // Set manual mode to true
         sendResponse("ack");
         return;
     }
@@ -408,7 +411,7 @@ void pcInterface::sendResponse(const char *format, ...)
     va_start(args, format);
     vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    Serial.println(buffer);
+    Serial.print(buffer);
     Serial.flush(); // Ensure the response is sent immediately
 }
 

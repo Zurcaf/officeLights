@@ -21,6 +21,7 @@ private:
     float _dutyCycle;
     unsigned long _previousMillis;
 
+    bool manualDutyMode = false; // Flag for manual mode
 
 
 public:
@@ -31,8 +32,13 @@ public:
     // Returns the duty cycle
     float calibrate_bm(unsigned long currentMillis);
 
+    float getDutyCycle();
+
     // Set the duty cycle of the LED
     void setDutyCycle(float dutyCycle);
+
+    // Set the manual mode for the driver
+    void setManualMode(bool manualMode);
 
     // Set Gain and offset d
     void setGainOffset(float _G, float _d);

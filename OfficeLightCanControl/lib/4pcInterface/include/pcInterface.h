@@ -6,6 +6,9 @@
 #include <string>    // For std::string
 #include <sstream>   // For std::stringstream
 #include <vector>    // For std::vector
+
+#include <luxmeter.h> // Include luxmeter header
+#include <driver.h>     // Include driver header
 #include <localController.h>  // Include localController header
 #include <dataStorageMetrics.h> // Include 
 
@@ -13,7 +16,7 @@
 
 class pcInterface {
 public:
-    pcInterface(uint8_t deskId, localController& ctrl, dataStorageMetrics& storage); // Constructor
+    pcInterface(uint8_t deskId, LuxMeter& luxM, Driver& driv, localController& ctrl, dataStorageMetrics& storage); // Constructor
     void begin(uint32_t baudRate);
     void processSerial();
 
@@ -55,6 +58,9 @@ private:
     std::vector<int> listIds;       // List of all desk IDs in the system
 
     DeskState desk;                 // Single desk state
+
+    LuxMeter& luxMeter;           // Lux meter instance
+    Driver& driver;             // Store reference to existing driver
     localController& controller;  // Store reference to existing localController    
     dataStorageMetrics& dataSt; // Store reference to existing dataStorageMetrics
 

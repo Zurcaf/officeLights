@@ -85,12 +85,11 @@ void loop()
         // Insert values into the metrics buffer
         metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
 
-        // Debug output
-        // Serial.printf("Reference: %.1f lux, Measured: %.1f lux, Duty Cycle: %.4f%%\n",
-        //               reference, measuredLux, dutyCycle);
-
         // Check interface for incoming messages
         interface.processSerial();
+
+        // Stream Serial data to the PC
+        interface.streamSerialData(dutyCycle, measuredLux, reference, currentMillis);
     }
 }
 

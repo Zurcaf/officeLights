@@ -19,6 +19,8 @@ public:
     pcInterface(uint8_t deskId, LuxMeter& luxM, Driver& driv, localController& ctrl, dataStorageMetrics& storage); // Constructor
     void begin(uint32_t baudRate);
     void processSerial();
+    void streamSerialData(float u, float y, float r, unsigned long time);
+
 
 private:
 
@@ -33,6 +35,10 @@ private:
 
     char commandBuffer[BUFFER_SIZE];
     uint8_t bufferIndex;
+
+    bool streaming_y = false; // Flag for streaming y data
+    bool streaming_u = false; // Flag for streaming u data
+    bool streaming_r = false; // Flag for streaming r data
 
     // Command parsing and execution
     void parseCommand(const char* cmd);

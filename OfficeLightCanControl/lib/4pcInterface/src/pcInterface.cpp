@@ -33,7 +33,7 @@ void pcInterface::processSerial()
             commandBuffer[bufferIndex] = '\0';
             if (bufferIndex > 0)
             {
-                sendResponse("Received: %s\n", commandBuffer); // Debug: Show received command
+                // sendResponse("Received: %s\n", commandBuffer); // Debug: Show received command
                 parseCommand(commandBuffer);
                 // Clear the buffer
                 for (uint8_t i = 0; i < BUFFER_SIZE; i++)
@@ -312,13 +312,21 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
     {
         if (tokens[1] == "y")
         {
-            // desk.streaming_y = true;
-            // sendResponse("s %d y %.2f time_in_millis!!", ID, desk.measuredIlluminance); // should be every 10 millis
+            streaming_y = true;
         }
         else if (tokens[1] == "u")
         {
-            // desk.streaming_u = true;
-            // sendResponse("s %d u %.2f time_in_millis!!", ID, desk.dutyCycle);
+            streaming_u = true;
+        }
+        else if (tokens[1] == "r")
+        {
+            streaming_r = true;
+        }
+        else if (tokens[1] == "all")
+        {
+            streaming_y = true;
+            streaming_u = true;
+            streaming_r = true;
         }
         else
         {
@@ -329,18 +337,46 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
     {
         if (tokens[1] == "y")
         {
-            // desk.streaming_y = false;
+            streaming_y = false;
             sendResponse("ack");
         }
         else if (tokens[1] == "u")
         {
-            // desk.streaming_u = false;
+            streaming_u = false;
+            sendResponse("ack");
+        }
+        else if (tokens[1] == "r")
+        {
+            streaming_r = false;
+            sendResponse("ack");
+        }
+        else if (tokens[1] == "all")
+        {
+            streaming_y = false;
+            streaming_u = false;
+            streaming_r = false;
             sendResponse("ack");
         }
         else
         {
             sendResponse("err");
         }
+    }
+}
+
+void pcInterface::streamSerialData(float u, float y, float r, unsigned long time)
+{
+    if (streaming_u)
+    {
+        sendResponse("s u %d %.2f %lu\n", myDeskId, u, time);
+    }
+    if (streaming_y)
+    {
+        sendResponse("s y %d %.2f %lu\n", myDeskId, y, time);
+    }
+    if (streaming_r)
+    {
+        sendResponse("s r %d %.2f %lu\n", myDeskId, r, time);
     }
 }
 

@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 #include "hardware/flash.h"
+#include <SPI.h>
+#include <mcp2515.h>
+
 
 #include <luxmeter.h>
 #include <driver.h>

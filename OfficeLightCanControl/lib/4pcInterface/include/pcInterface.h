@@ -21,43 +21,10 @@ public:
     void processSerial();
 
 private:
-    // Desk state structure for a single desk
-    struct DeskState {
-        bool streaming_u;           // streaming duty cycle
-        bool streaming_y;           // streaming illuminance
-
-        float dutyCycle;            // u (duty cycle)
-        float illuminanceRef;       // r (reference illuminance)
-
-        // meeasurements
-        float measuredIlluminance;  // y (measured illuminance)
-        float ldrVoltage;           // v (LDR voltage)
-
-        bool occupancy;             // o (occupancy)
-        bool antiWindup;            // a (anti-windup)
-        bool feedbackControl;       // f (feedback control)
-        
-        float externalIlluminance;  // d (external illuminance) - constant
-
-        // metrics
-        float powerConsumption;     // p (power consumption)
-        float elapsedTime;          // t (elapsed time)
-        float avgEnergy;            // E (average energy)
-        float avgVisibilityError;   // V (average visibility error)
-        float avgFlickerError;      // F (average flicker error)
-
-        // Second part of lab
-        float occupiedLowerBound;   // O (occupied lower bound)
-        float unoccupiedLowerBound; // U (unoccupied lower bound)
-        float currentLowerBound;    // L (current lower bound)
-        float energyCost;           // C (energy cost)
-    };
 
     int myDeskId;                   // The desk ID assigned to this Pico
     int numDesks;                   // Number of desks in the system
     std::vector<int> listIds;       // List of all desk IDs in the system
-
-    DeskState desk;                 // Single desk state
 
     LuxMeter& luxMeter;           // Lux meter instance
     Driver& driver;             // Store reference to existing driver

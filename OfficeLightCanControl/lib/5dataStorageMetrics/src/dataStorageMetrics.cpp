@@ -54,6 +54,28 @@ uint16_t dataStorageMetrics::getBuffer(float* dutyCycleOut, float* luxOut, int* 
     return elements;
 }
 
+uint16_t dataStorageMetrics::getUbuffer(float* uOut) {
+    uint16_t elements = isFull ? STORAGE_BUFFER_SIZE : count;
+    uint16_t current = isFull ? head : 0;
+    
+    for (uint16_t i = 0; i < elements; i++) {
+        uOut[i] = uBuffer[current];
+        current = incrementIndex(current);
+    }
+    return elements;
+}
+
+uint16_t dataStorageMetrics::getYbuffer(float* yOut) {
+    uint16_t elements = isFull ? STORAGE_BUFFER_SIZE : count;
+    uint16_t current = isFull ? head : 0;
+    
+    for (uint16_t i = 0; i < elements; i++) {
+        yOut[i] = yBuffer[current];
+        current = incrementIndex(current);
+    }
+    return elements;
+}
+
 float dataStorageMetrics::getPowerConsumption() 
 {
     float instantPower = 0.0f;

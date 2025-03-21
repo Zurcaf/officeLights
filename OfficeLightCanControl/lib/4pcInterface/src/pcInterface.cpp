@@ -4,10 +4,6 @@ pcInterface::pcInterface(uint8_t deskId, LuxMeter& luxM, Driver& driv, localCont
     : myDeskId(deskId),luxMeter(luxM), driver(driv), controller(ctrl), dataSt(storage)
 {
     // Initialize single desk state
-    desk = {false, false, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false,
-            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f};
-
     listIds.push_back(myDeskId); // Add the current desk ID to the list
     numDesks = 1;                // Initialize with 1 desk
 }
@@ -143,14 +139,6 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
         }
 
         ID = atoi(tokens[3].c_str());
-        //     float uData[6000], yData[6000];
-        //     int timestamps[6000];
-        //     uint16_t elements = metrics.getBuffer(uData, yData, timestamps);
-        //     // print the buffer contents
-        //     for (uint16_t i = 0; i < elements; i++)
-        //     {
-        //         Serial.printf("Duty cycle: %f, Lux: %f, Timestamp: %d\n", uData[i], yData[i], timestamps[i]);
-        //     }
 
         if (isNotValidID(ID))
         {
@@ -159,17 +147,35 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
         }
         if (tokens[2] == "u")
         {
+            float uData[6000];
+            uint16_t elements = dataSt.getUbuffer(uData);
+            // print the buffer contents
+            Serial.printf("b u %d\n", ID);
 
-            sendResponse("u %d %.2f", ID, desk.dutyCycle);
+            for (uint16_t i = 0; i < elements-1; i++)
+            {
+                Serial.printf("%0.2f, ", uData[i]);
+            }
+            Serial.printf("%0.2f\n", uData[elements-1]);
         }
         else if (tokens[2] == "y")
         {
-            sendResponse("y %d %.2f", ID, desk.measuredIlluminance);
+            float yData[6000];
+            uint16_t elements = dataSt.getYbuffer(yData);
+            // print the buffer contents
+            Serial.printf("b y %d\n", ID);
+
+            for (uint16_t i = 0; i < elements-1; i++)
+            {
+                Serial.printf("%0.2f ,", yData[i]);
+            }
+            Serial.printf("%0.2f\n", yData[elements-1]);
         }
         else
         {
             sendResponse("err - unknown get buffer command", tokens[3]);
         }
+        return;
     }
 
     if (tokens.size() != 3)
@@ -275,7 +281,7 @@ void pcInterface::executeGetCommand(std::vector<std::string> tokens)
     }
     else if (tokens[1] == "C")
     {
-        sendResponse("C %d %.2f", myDeskId, desk.energyCost);
+        // sendResponse("C %d %.2f", myDeskId, desk.energyCost);
     }
     else
     {
@@ -306,13 +312,13 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
     {
         if (tokens[1] == "y")
         {
-            desk.streaming_y = true;
-            sendResponse("s %d y %.2f time_in_millis!!", ID, desk.measuredIlluminance); // should be every 10 millis
+            // desk.streaming_y = true;
+            // sendResponse("s %d y %.2f time_in_millis!!", ID, desk.measuredIlluminance); // should be every 10 millis
         }
         else if (tokens[1] == "u")
         {
-            desk.streaming_u = true;
-            sendResponse("s %d u %.2f time_in_millis!!", ID, desk.dutyCycle);
+            // desk.streaming_u = true;
+            // sendResponse("s %d u %.2f time_in_millis!!", ID, desk.dutyCycle);
         }
         else
         {
@@ -323,12 +329,12 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
     {
         if (tokens[1] == "y")
         {
-            desk.streaming_y = false;
+            // desk.streaming_y = false;
             sendResponse("ack");
         }
         else if (tokens[1] == "u")
         {
-            desk.streaming_u = false;
+            // desk.streaming_u = false;
             sendResponse("ack");
         }
         else
@@ -474,9 +480,9 @@ void pcInterface::executeSetCommand(std::vector<std::string> tokens)
     }
     if (tokens[0] == "C")
     {
-        float value = extractValue(tokens[2].c_str());
-        desk.energyCost = value;
-        sendResponse("ack");
+        // float value = extractValue(tokens[2].c_str());
+        // desk.energyCost = value;
+        sendResponse("ack- NOT DONE YET");
         return;
     }
 
@@ -507,7 +513,5 @@ float pcInterface::extractValue(const char *cmd)
 
 void pcInterface::resetSystem()
 {
-    desk = {false, false, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false,
-            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f};
+    Serial.println("System reset initiated.");
 }

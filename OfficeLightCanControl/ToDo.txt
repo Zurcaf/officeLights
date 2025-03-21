@@ -18,14 +18,14 @@ Energy calculation
 
 - relate Gain with Tk (K = Tk / Gain)
 
-------------------------------------------DONE----------------------------------
-
 - implement commands, fase3
-
--feedforward a 0.95% e a usar o external light
 
 Inicialization of PWM LED PIN *OUTPUT function
 - Try to check for other currents in PICO to get more luminance in the LED
+
+
+------------------------------------------DONE----------------------------------
+-feedforward a 0.95% e a usar o external light
 
 Testes
 - test antiwindup on/off

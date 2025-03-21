@@ -34,6 +34,8 @@ void setup()
     analogWriteFreq(60000);
     analogWriteRange(DAC_RANGE);
 
+    pinMode(LED_PIN, OUTPUT_12MA);
+
     flash_get_unique_id(id);
     unowned_rasp = luxMeter.setCalibration(id);
 

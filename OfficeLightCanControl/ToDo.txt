@@ -7,27 +7,28 @@ Controlador
 Interface
 - make other classes avaiable to the interface (e.g. Controlador, etc.)
 
-
-
 - implement commands, fase1
 - implement commands, fase2
-- implement commands, fase3
 - Implemntar buffer no main
 - implement commands, fase4
 - implement commands, fase5
 
 Energy calculation
-- Calculate Pmax
+- Calculate Pmax (tensão 47ohm = 0.392V => 0.392/47 = 0.0083A = 8.3mA)
 
-Inicialization of PWM LED PIN OUTPUT function
+- relate Gain with Tk (K = Tk / Gain)
+
+------------------------------------------DONE----------------------------------
+
+- implement commands, fase3
+
+Inicialization of PWM LED PIN *OUTPUT function
 - Try to check for other currents in PICO to get more luminance in the LED
 
 Testes
 - test antiwindup on/off
 - test feedback on/off
 - test bumpLess on/off;
-
-- relate Gain with Tk (K = Tk / Gain)
 
 - afinar ganhos PID
 

@@ -513,5 +513,5 @@ float pcInterface::extractValue(const char *cmd)
 
 void pcInterface::resetSystem()
 {
-    Serial.println("System reset initiated.");
+    Serial.println("System reset initiated. - NOT DONE YET");
 }

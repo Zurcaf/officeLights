@@ -30,7 +30,7 @@ private:
 public:
     localController(
         float h = 0.01, float Tk = 1.0, float b = 1.0, float c = 0.0,                                   // Sampling period, proportional gain, setpoint weight in proportional
-        float Ti = 0.2, float Td = 0.5, float Tt = 1.0, float N = 10.0,                                // Integral time, derivative time, derivative filter coefficient
+        float Ti = 0.8, float Td = 0.5, float Tt = 0.1, float N = 10.0,                                // Integral time, derivative time, derivative filter coefficient
         bool integratorOnly = true, bool bumpLess = true, bool occupancy = false, bool feedback = true, bool antiWindup = true); // Integrator only mode flag, occupancy control mode flag, feedback control mode flag, anti-windup control mode flag
     // Destructor
     ~localController();

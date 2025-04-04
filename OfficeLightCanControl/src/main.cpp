@@ -75,7 +75,7 @@ void loop()
         float dutyCycle = pidController.compute_control(); // Compute control output based on reference (r) and measured output (y)
 
         // Set the duty cycle (0-100%) using the Driver
-        driver.setDutyCycle(dutyCycle);
+        dutyCycle = driver.setDutyCycle(dutyCycle);
 
         // Update internal state (housekeeping) for the PID controller
         pidController.housekeep(measuredLux);
@@ -88,8 +88,10 @@ void loop()
         // Check interface for incoming messages
         interface.processSerial();
 
+        float voltage = luxMeter.getLdrVoltage(); // Get the LDR voltage value
+
         // Stream Serial data to the PC
-        interface.streamSerialData(dutyCycle, measuredLux, reference, currentMillis);
+        interface.streamSerialData(dutyCycle, measuredLux, reference, voltage, currentMillis);
     }
 }
 

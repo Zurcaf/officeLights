@@ -15,7 +15,7 @@
 #include <canRoutines.h>
 
 // Pin Definitions
-#define LED_PIN 1
+#define LED_PIN 15
 #define LDR_PIN A0
 
 constexpr int FREQ_500Hz = 2; // Sample period in miliseconds

@@ -24,17 +24,124 @@ Inicialization of PWM LED PIN *OUTPUT function
 - Try to check for other currents in PICO to get more luminance in the LED
 
 
+- check buffer if it goes around
 ------------------------------------------DONE----------------------------------
--feedforward a 0.95% e a usar o external light
+
+
+- feedforward a 0.95% e a usar o external light (if up-> down != down -> up)
+- differnt Gs for different lux values?
+
+4.4. Guidelines for the mid-term report
+
+a- The report should describe the problem, the solutions adopted, the results obtained,
+and discuss the pros and cons of your design choices.
+
+b- The report must be complete but succinct, with fewer than 6 pages of text – you may
+include as many figures as you wish. Avoid redundancies and overly technical
+content. Summarise as much as possible, but do not leave out important issues.
+
+c- Graphics should be self-contained, i.e., fully labelled and with complete captions.
+
+d- Take pictures of the interior and exterior of the box enclosing the luminaires. Make
+sure that the positions of the LED, the LDR and the emission / reflection paths are
+visible in the photo.
+
+e- Show plots of the steady state characteristic of the system. Show step responses of
+the system under different illuminance conditions.
+
+f- Characterise the jitter in your control system. How much does the sampling rate
+deviate from the desired one?
+
+g- Illustrate the operation of the PID controller features - anti-windup, set-point
+weighting, etc) with plots of the time responses. In the plots always include the
+sensor measurement and the control signal – both are essential to characterize your
+controller.
+
+h-Measure the processing time taken by the control computation, serial
+communications, CAN-BUS communications, and other computations.
+
+i- Always use SI units for pertinent quantities. Check the data sheets to verify
+conversions from electrical to physical units.
+
+
+Input Report:
+- overview of the system (block diagram)
+- fotos of box (note that LDR is lower than LED, to make sure that the light measurement is from reflected light and not direct light)
+
+- low pass filter cuttoff frequency 
+            => (fc = 1 / (2 * pi * R * C)) (R = variable, C = 100uF => fc = ???) https://www.electronics-tutorials.ws/filter/filter_2.html
+            => tau = R * C,
+            => LDR a 10LUX -> 250k * 10uF = 2.5s (time to reach 63% of the final value)
+            => 5 * tau = 12.5s (time to reach 99% of the final value)
+            => LDR a 100 LUX -> tau = 10K * 10uF = 0.1s (time to reach 63% of the final value)
+            => 5 * tau = 0.5s (time to reach 99% of the final value)
+
+- note that the steling time of the LDR is much lower than the steling time of the filter so the LDR will not affect the steling time of the system reading because
+the filter will be the one that will take more time to reach the final value 
+            => Rise = 20ms
+            => Decay = 30ms
+- Finite Impulse Response Filter (FIR) https://www.sciencedirect.com/topics/computer-science/finite-impulse-response-filter
+- conversion of LDR voltage to lux (ADCValue -> voltage -> Resistence -> Lux)
+- finetune off b and m (and meaning of each one -> caracteristica do LDR)
+             => m should help to make the relation between the lux and the voltage more linear
+             => b should help to make the Lux''s values more realistic (but only with a luxMeter real values of lux could be calibrated)
+    Data:
+             => Log(lux) = m * log(Resistance) + b (slould be linear)
+             => LUX(Duty Cycle) --> steps of duty cycle; (linear!)
+             
+- calculations of box gain (0% duty 100% duty); does it need a second gain to higher lux values?
+- calculation of max Power (Pmax = 0.392V / 47ohm = 0.0083A = 8.3mA)
+
+- Controller design (PID, feedforward, bumpLess, antiwindup, setPoint)
+- integral only mode also done
+- flicker error calculations
+- jitter error calculations (mean)
+- PID tuning (Ziegler-Nichols, Cohen)
+- fotos of step response (step response with different gains)
+
+
+- accuracy (accuracy with different gains)
+- overshooting (overshoot and undershoot)
+- oscillation (oscillation with different gains)
+- settling time (settling time with different gains)
+- steady state error (steady state error with different gains)
+- all gains = for both luminaires?
+
+- last-minute buffer implementation (circular buffer with 6000 samples at 100Hz sampling rate)
+- extra messages for interface
+- serial comms time to communicate (USB)
+- serial comms speed (115200 baud rate)
+
+- terminal resistors to reduce reflections in the CAN bus (120 ohm)
+- twsited wires to reduce eletromagnetic interference (EMI)
+- can it be maximized? (USB speed)
+- Can IDs
+- message types
+- time to comunicate (CAN bus)
+- CAN bus speed (1Mbit/s)
+- CAN bus messages (send and receive)
+- CAN bus messages (ACK, error, debug, status)
+
+- non blocking code, multitasking, and interrupts (CAN bus)
+    =>  interrupts in the 1000hz timer (1ms) lower importance than the 100Hz timer (10ms) 
+        because it is more important to have the control loop running than the sampling of the LDR for the filter
+    =>  Serial comms != loop from CAN bus with a frequency if 10Hz (100ms) 
+        user does not need to see the data in real time and inproves jitter in a normal mode
+    => CAN bus (second core because need more time to check the line)  
+    => 
+- PCB foto and build
+
 
 Testes
+- que plots quero que sejam feitos?
+- duty setps (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0) (verificar se o duty cycle é o mesmo que o valor de referencia)
+- afinar ganhos PID
 - test antiwindup on/off
 - test feedback on/off
 - test bumpLess on/off;
 
-- afinar ganhos PID
+- referencia alta (impossivel) depois baixa (verificar sobreshoting)
 
-- que plots quero que sejam feitos?
 - plotar tudo;
 
 - testar envio de mensagens CAN um no para o outro;

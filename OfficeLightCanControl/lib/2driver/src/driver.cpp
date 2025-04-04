@@ -34,18 +34,18 @@ float Driver::getDutyCycle()
     return _dutyCycle;
 }
 
-void Driver::setDutyCycle(float dutyCycle)
+float Driver::setDutyCycle(float dutyCycle)
 {
     if (manualDutyMode) // If in manual mode, do not change the duty cycle
     {
-        return;
+        return _dutyCycle;
     }
         
     _dutyCycle = dutyCycle;
     int writedutyCycle = (int) (_dutyCycle * _dacRange);
     analogWrite(_ledPin, writedutyCycle);
 
-    return;
+    return _dutyCycle;
 }
 
 void Driver::setManualMode(bool manualMode) {

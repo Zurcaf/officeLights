@@ -35,7 +35,7 @@ public:
     float getDutyCycle();
 
     // Set the duty cycle of the LED
-    void setDutyCycle(float dutyCycle);
+    float setDutyCycle(float dutyCycle);
 
     // Set the manual mode for the driver
     void setManualMode(bool manualMode);

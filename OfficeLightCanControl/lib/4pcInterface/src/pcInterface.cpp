@@ -327,6 +327,7 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
             streaming_y = true;
             streaming_u = true;
             streaming_r = true;
+            streaming_v = true;
         }
         else
         {
@@ -355,6 +356,7 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
             streaming_y = false;
             streaming_u = false;
             streaming_r = false;
+            streaming_v = false;
             sendResponse("ack");
         }
         else
@@ -364,19 +366,28 @@ void pcInterface::executeStreamCommand(std::vector<std::string> tokens)
     }
 }
 
-void pcInterface::streamSerialData(float u, float y, float r, unsigned long time)
+void pcInterface::streamSerialData(float u, float y, float r, float v, unsigned long time)
 {
-    if (streaming_u)
+    if (streaming_u && !streaming_y && !streaming_r && !streaming_v)
     {
         sendResponse("s u %d %.2f %lu\n", myDeskId, u, time);
     }
-    if (streaming_y)
+    if (!streaming_u && streaming_y && !streaming_r && !streaming_v)
     {
         sendResponse("s y %d %.2f %lu\n", myDeskId, y, time);
     }
-    if (streaming_r)
+    if (!streaming_u && !streaming_y && streaming_r && !streaming_v)
     {
         sendResponse("s r %d %.2f %lu\n", myDeskId, r, time);
+    }
+    if (!streaming_u && !streaming_y && !streaming_r && streaming_v)
+    {
+        sendResponse("s v %d %.2f %lu\n", myDeskId, v, time);
+    }
+
+    if (streaming_u && streaming_y && streaming_r && streaming_v)
+    {
+        sendResponse("s %d %.2f %.3f %.2f %.3f %lu\n", myDeskId, u, y, r, v, time);
     }
 }
 
@@ -534,7 +545,6 @@ void pcInterface::sendResponse(const char *format, ...)
     vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
     Serial.print(buffer);
-    Serial.flush(); // Ensure the response is sent immediately
 }
 
 uint8_t pcInterface::extractDeskId(const char *cmd)

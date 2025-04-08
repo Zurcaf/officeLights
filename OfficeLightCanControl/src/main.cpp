@@ -24,6 +24,9 @@ localController pidController;
 // Data storage metrics instance~
 dataStorageMetrics metrics;
 
+// Create CAN handler instance with your SPI configuration
+CANHandler canHandler(spi0, 5, 3, 4, 2, 10000000);
+
 // Serial Interface to comunicate with PC
 pcInterface interface(1, luxMeter, driver, pidController, metrics);
 
@@ -50,6 +53,12 @@ void setup()
     calibrate_Gd();
 
     Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
+
+    if (!canHandler.begin(CAN_1000KBPS)) {
+        Serial.println("CAN initialization failed!");
+        while(1); // halt if CAN initialization fails
+    }
+    canHandler.setTransmitInterval(1000); // Set transmit interval to 1000ms
 }
 
 void loop()
@@ -92,6 +101,9 @@ void loop()
 
         // Stream Serial data to the PC
         interface.streamSerialData(dutyCycle, measuredLux, reference, voltage, currentMillis);
+
+        canHandler.process(); // Handles both transmission and reception
+
     }
 }
 

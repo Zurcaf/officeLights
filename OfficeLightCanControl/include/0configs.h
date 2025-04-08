@@ -12,11 +12,19 @@
 #include <localController.h>
 #include <pcInterface.h>
 #include <dataStorageMetrics.h> 
-#include <canRoutines.h>
+#include "CANHandler.h"
 
 // Pin Definitions
 #define LED_PIN 15
 #define LDR_PIN A0
+
+
+// SPI pins for Raspberry Pi Pico
+#define SPI_MISO 3
+#define SPI_MOSI 4
+#define SPI_SCK 2
+#define CAN_CS 5
+
 
 constexpr int FREQ_500Hz = 2; // Sample period in miliseconds
 constexpr int FREQ_100Hz = 10; // PID control period in miliseconds

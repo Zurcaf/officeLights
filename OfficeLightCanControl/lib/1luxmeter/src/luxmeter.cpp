@@ -16,31 +16,13 @@ LuxMeter::LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange, int dacRan
         runningVariance = 0.0f; 
     }
 
-bool LuxMeter::setCalibration(uint8_t* id) {
-    // Seting b and m according to the ID of the device (unique to each LDR sensor)
-    // The specific ID checking for in byte array form
-
-    //ID of rapsberry pi A
-    uint8_t targetId1[8] = {0xE6, 0x61, 0x18, 0x60, 0x4B, 0x84, 0x3A, 0x21};
-
-    //ID of rapsberry pi B
-    uint8_t targetId2[8] = {0xE6, 0x60, 0xC0, 0xD1, 0xC7, 0x6F, 0x22, 0x2F};
-
-    // Compare the id byte-by-byte
-    if (id != nullptr && memcmp(id, targetId1, 8) == 0) {
-        // If IDs match, set the m and b coefficients for A
-        _m = -0.8;
-        _b = 5.976;
-        return false;
-    }else if (id != nullptr && memcmp(id, targetId2, 8) == 0) {
-        // If IDs match, set the m and b coefficients for B
-        _m = -0.8;
-        _b = 5.976;
-        return false;
-    }else {
-        return true;
-    }
+void LuxMeter::setCalibration(float m, float b) 
+{
+    // Set calibration parameters
+    _m = m;
+    _b = b;
 }
+
 
 std::tuple<float, float, float, float> LuxMeter::calculateAllValues() {
    

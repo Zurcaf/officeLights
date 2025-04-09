@@ -28,7 +28,7 @@ public:
     LuxMeter(int ldrPin, float vcc, float rFixed, int adcRange, int dacRange);
 
     // Set calibration based on the ID of the device
-    bool setCalibration(uint8_t *id);
+    void setCalibration(float m, float b);
 
     // Calculate all values and return as a tuple
     std::tuple<float, float, float, float> calculateAllValues();
@@ -45,6 +45,7 @@ public:
     void calibrate_bm(unsigned long currentMillis, float dutuCycle);
     
     float filteredAdcValue;
+
 
 private:
     // Original Lux calculation parameters

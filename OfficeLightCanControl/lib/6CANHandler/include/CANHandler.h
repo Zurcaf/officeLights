@@ -3,8 +3,8 @@
 
 #include "mcp2515.h"
 #include "pico/unique_id.h"
-#include <cstring>  // Added for memcpy
-#include <cstdio>   // For snprintf
+#include <cstring>
+#include <cstdio>
 
 class CANHandler {
 public:
@@ -14,23 +14,25 @@ public:
     // Initialize CAN controller
     bool begin(uint32_t bitrate = CAN_1000KBPS);
     
-    // Send a message
-    bool sendMessage(uint32_t id, const uint8_t *data, uint8_t length);
+    // Send a message with composite ID
+    bool sendMessage(uint8_t messageId, uint8_t deskId, const uint8_t *data, uint8_t length);
     
     // Check if a message is available
     bool available();
     
-    // Read a received message
-    bool readMessage(uint32_t *id, uint8_t *data, uint8_t *length);
+    // Read a received message and extract composite IDs
+    bool readMessage(uint8_t *messageId, uint8_t *deskId, uint8_t *data, uint8_t *length);
     
-    // Get the node address (short ID)
+    // Get the node address (short id)
     uint8_t getNodeAddress() const;
     
     // Set the transmission interval
     void setTransmitInterval(unsigned long interval);
     
-    // Main processing function (replaces loop functionality)
-    void process();
+    // Main processing function
+    // void process();
+    void printToSerial(const char *message);
+
     
 private:
     MCP2515 m_can;
@@ -41,7 +43,12 @@ private:
     unsigned long m_counter;
     char m_print_buffer[100];
     
-    void printToSerial(const char *message);
+    // Combine message and desk IDs into 11-bit CAN ID
+    uint16_t composeCanId(uint8_t messageId, uint8_t deskId) const;
+    
+    // Extract message and desk IDs from 11-bit CAN ID
+    void decomposeCanId(uint16_t canId, uint8_t *messageId, uint8_t *deskId) const;
+    
 };
 
 #endif // CAN_HANDLER_H

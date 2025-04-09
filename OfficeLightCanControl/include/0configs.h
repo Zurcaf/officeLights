@@ -38,7 +38,7 @@ constexpr int interval = 6000;
 
 constexpr float STEP_SIZE = 0.1;
 
-// Function to run on Core 1: Continuously update moving average
+void raspConfig();
 void calibrate_Mb ();
 void calibrate_Gd ();
 

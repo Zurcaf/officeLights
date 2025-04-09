@@ -1,12 +1,12 @@
 #include <0configs.h>
 
-bool unowned_rasp = true;
+unsigned long lastTestMessageTime = 0;
+const unsigned long testMessageInterval = 1000; // Send every 1 second
+uint8_t testCounter = 0;
+
 float reference;     // Reference value for PID control
 float currentMillis; // Current time in milliseconds
 bool manualDuty = false; // Flag for manual mode
-
-// ID of the device
-uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Time configurations
 unsigned long LastUpdate_500Hz = 0;
@@ -28,37 +28,28 @@ dataStorageMetrics metrics;
 CANHandler canHandler(spi0, 5, 3, 4, 2, 10000000);
 
 // Serial Interface to comunicate with PC
-pcInterface interface(1, luxMeter, driver, pidController, metrics);
+pcInterface interface(luxMeter, driver, pidController, metrics, canHandler);
 
 void setup()
 {
     interface.begin(115200); // Start serial communication with PC
+
     analogReadResolution(12);
     analogWriteFreq(60000);
     analogWriteRange(DAC_RANGE);
-
     pinMode(LED_PIN, OUTPUT_12MA);
 
-    flash_get_unique_id(id);
-    unowned_rasp = luxMeter.setCalibration(id);
-
-    // Print the ID of the Raspberry Pi to avoid running the code on the wrong device
-    while (unowned_rasp)
-    {
-        Serial.printf("ID: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
-                      id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7]);
-        Serial.println("Unowned Raspberry Pi.");
-    }
+    raspConfig(); // Configure the Raspberry Pi based on its unique ID
 
     calibrate_Gd();
-
-    Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
 
     if (!canHandler.begin(CAN_1000KBPS)) {
         Serial.println("CAN initialization failed!");
         while(1); // halt if CAN initialization fails
     }
     canHandler.setTransmitInterval(1000); // Set transmit interval to 1000ms
+
+    
 }
 
 void loop()
@@ -102,8 +93,106 @@ void loop()
         // Stream Serial data to the PC
         interface.streamSerialData(dutyCycle, measuredLux, reference, voltage, currentMillis);
 
-        canHandler.process(); // Handles both transmission and reception
+        // Process incoming CAN messages
+        interface.processIncomingCANMessages();
+    }
 
+    // if (currentMillis - lastTestMessageTime >= testMessageInterval) {
+    //     lastTestMessageTime = currentMillis;
+        
+    //     // Prepare test message
+    //     uint8_t testData[8] = {0};
+    //     testData[0] = testCounter++;
+    //     testData[1] = interface.getMyId(); // Include our own ID in the message
+
+    //     bool sent = canHandler.sendMessage(1, 2, testData, sizeof(testData));
+    //     if (sent)
+    //     {
+    //         Serial.printf("Sent test message to desk 2, counter: %d\n", testCounter);
+    //     }
+    //     else
+    //     {
+    //         Serial.println("Failed to send test message");
+    //     }
+    // }
+
+//     // Check for received CAN messages
+// uint8_t receivedMessageId, receivedDeskId;
+// uint8_t receivedData[8];
+// uint8_t receivedLength;
+
+// if (canHandler.readMessage(&receivedMessageId, &receivedDeskId, receivedData, &receivedLength)) {
+//     Serial.printf("Received message from desk %d, type %d: ", receivedDeskId, receivedMessageId);
+//     for (int i = 0; i < receivedLength; i++) {
+//         Serial.printf("%02X ", receivedData[i]);
+//     }
+//     Serial.println();
+    
+//     // For test messages (type 1)
+//     if (receivedMessageId == 1) {
+//         uint8_t senderCounter = receivedData[0];
+//         uint8_t senderId = receivedData[1];
+//         Serial.printf("Test message from desk %d: counter=%d\n", senderId, senderCounter);
+//     }
+// }
+}
+
+// Seting b and m according to the ID of the device (unique to each LDR sensor)
+// The specific ID checking for in byte array form
+void raspConfig() 
+{
+    // ID of the device
+    uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+    // Get the unique ID of the Raspberry Pi
+    flash_get_unique_id(id);
+
+    //ID of rapsberry pi A
+    uint8_t targetId1[8] = {0xE6, 0x61, 0x18, 0x60, 0x4B, 0x84, 0x3A, 0x21};
+
+    //ID of rapsberry pi B
+    uint8_t targetId2[8] = {0xE6, 0x60, 0xC0, 0xD1, 0xC7, 0x6F, 0x22, 0x2F};
+
+    //ID of rapsberry pi C E6:61:18:60:4B:4E:B6:27
+    uint8_t targetId3[8] = {0xE6, 0x61, 0x18, 0x60, 0x4B, 0x4E, 0xB6, 0x27};
+
+    // Compare the id byte-by-byte
+    if (id != nullptr && memcmp(id, targetId1, 8) == 0) 
+    {
+        //COM10
+        luxMeter.setCalibration(-0.8, 5.976); // Set the calibration coefficients for A if the ID matches
+
+        // AQUI ENTRA O CODIOGO DE boot DOS IDS
+        interface.myIdInit(1); // Set the ID for the interface
+        interface.addDeskId(2); // Add the ID to the list of desks
+        interface.addDeskId(3); // Add the ID to the list of desks
+    }
+    else if (id != nullptr && memcmp(id, targetId2, 8) == 0)
+    {
+        //COM8
+        luxMeter.setCalibration(-0.8, 5.976); // Set the calibration coefficients for B if the ID matches
+
+        interface.myIdInit(2); // Set the ID for the interface
+        interface.addDeskId(1); // Add the ID to the list of desks
+        interface.addDeskId(3); // Add the ID to the list of desks
+    }else if (id != nullptr && memcmp(id, targetId3, 8) == 0)
+    {
+        // COM24
+        luxMeter.setCalibration(-0.8, 5.976); // Set the calibration coefficients for C if the ID matches
+
+        interface.myIdInit(3); // Set the ID for the interface
+        interface.addDeskId(1); // Add the ID to the list of desks
+        interface.addDeskId(2); // Add the ID to the list of desks
+    }
+    else
+    {
+        // Print the ID of the Raspberry Pi to avoid running the code on the wrong device
+        while (true)
+        {
+            Serial.printf("ID: %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+                          id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7]);
+            Serial.println("Unowned Raspberry Pi.");
+        }
     }
 }
 
@@ -204,4 +293,6 @@ void calibrate_Gd()
     // Overwrite the gain and offset in the driver for debugging purposes (real values already precalibrated to not waist time)
     driver.setGainOffset(17.970798, 2.081886);
     pidController.setGainAndExternal(17.970798, 2.081886); // Set the gain and external illuminance in the controller
+    
+    Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
 }

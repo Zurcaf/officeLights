@@ -2,6 +2,7 @@
 
 // The MCP2515 CAN controller is assumed to be defined globally.
 extern MCP2515 canHandler;
+extern LuxMeter luxMeter;
 
 CalibrationManager::CalibrationManager(int id, const uint8_t* ids, int count, unsigned long measure_time)
     : node_id(id), total_nodes(count), measurement_time(measure_time) {
@@ -89,13 +90,7 @@ void CalibrationManager::moveToNextNode() {
 }
 
 float CalibrationManager::readLux() {
-    int read_adc = analogRead(A0);
-    float v = (read_adc * 3.3) / 4096;
-    float Rl = ((10000 * 3.3) / v) - 10000;
-    float lux = pow(10, (log10(Rl) - 6.2) / (-0.9));
-    Serial.print("[Sensor] Read lux: ");
-    Serial.println(lux);
-    return lux;
+    return LuxMeter.getLuxValue();
 }
 
 void CalibrationManager::setPWM(float duty) {

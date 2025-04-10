@@ -17,6 +17,14 @@ localController::localController(
       _bi{0.0}, _ad{0.0}, _bd{0.0}, _ao{0.0}
 {
     constantCalc(); // Calculate the constants in the local controller
+    if (_occupancy)
+    {
+        _r = _lowerBoundOccupied; // Set reference to lower bound if above threshold
+    }
+    else
+    {
+        _r = _lowerBoundUnoccupied; // Set reference to lower bound if below threshold
+    }
 }
 
 // Destructor (empty as no dynamic memory is managed)

@@ -35,7 +35,7 @@ private:
   unsigned long bootStartTime;
   unsigned long lastBootSentTime;
 
-  static const unsigned long BOOT_TIMEOUT = 50000;     // Boot listen period in milliseconds.
+  static const unsigned long BOOT_TIMEOUT = 15000;     // Boot listen period in milliseconds.
   static const unsigned long BOOT_SEND_INTERVAL = 5000;  // Interval between boot messages (ms).
   static const int MAX_NODES = 3;
 

@@ -21,8 +21,8 @@ public:
     DistributedLuminaire(uint8_t id, uint8_t ledPin, uint8_t ldrPin, int numNodes, MCP2515& canDev);
 
     void setCouplingVector(float matrix[MAX_NODES]);
-    void setReference(uint8_t i, float ref);
-    void setExternalIllum(uint8_t i, float ext);
+    void setReference();
+    void setExternalIllum();
 
     void updateControl();
     void sendIntent();
@@ -46,8 +46,8 @@ private:
 
     float u[MAX_NODES];
     float k[MAX_NODES];
-    float r[MAX_NODES];
-    float d[MAX_NODES];
+    float r;
+    float d;
 
     void setLED(float duty);
 };

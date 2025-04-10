@@ -6,8 +6,6 @@ DistributedLuminaire::DistributedLuminaire(uint8_t id, uint8_t ledPin, uint8_t l
     analogWrite(ledPin, 0);
     for (int i = 0; i < MAX_NODES; ++i) {
         u[i] = 0.0;
-        d[i] = 0.0;
-        r[i] = 0.0;
     }
 
     nodeIndex = getNodeIndex(nodeID)
@@ -18,12 +16,19 @@ void DistributedLuminaire::setCouplingVector(float vector[MAX_NODES]) {
     memcpy(k, vector, sizeof(k));
 }
 
-void DistributedLuminaire::setReference(uint8_t i, float ref) {
-    r[i] = ref;
+void DistributedLuminaire::setReference(float ref) {
+    r = ref;
 }
 
-void DistributedLuminaire::setExternalIllum(uint8_t i, float ext) {
-    d[i] = ext;
+void DistributedLuminaire::setExternalIllum() {
+    float l = readLUX();
+    float sum=0;
+    for(int i; i<numNodes; i++){
+        sum += k[i]*u[i];
+    }
+    d = l - sum;
+    if(d < 0){d=0;}
+    return;
 }
 
 int CalibrationManager::getNodeIndex(uint8_t sender_id) {
@@ -43,7 +48,7 @@ void DistributedLuminaire::updateControl() {
         }
     }
 
-    float u_new = (r[nodeIndex] - d[nodeIndex] - sum_k_neighbors) / k[nodeIndex];
+    float u_new = (r - d - sum_k_neighbors) / k[nodeIndex];
     u[nodeIndex] = constrain(u_new, 0.0, 100.0);
     //setLED(u[nodeIndex]);
 }

@@ -40,6 +40,8 @@ constexpr int interval = 6000;
 
 constexpr float STEP_SIZE = 0.1;
 
+void can_checker();
+void receive_nodes();
 void raspConfig();
 void calibrate_Mb ();
 void calibrate_Gd ();

@@ -3,9 +3,8 @@
 // The MCP2515 CAN controller is assumed to be defined globally.
 extern MCP2515 canHandler;
 
-NetworkBoot::NetworkBoot(uint8_t id)
-  : myNodeId(id),
-    bootState(BOOT_INIT),
+NetworkBoot::NetworkBoot()
+  : bootState(BOOT_INIT),
     bootStartTime(0),
     lastBootSentTime(0),
     nodeCount(0)

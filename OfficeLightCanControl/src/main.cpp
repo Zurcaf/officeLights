@@ -37,7 +37,7 @@ CANHandler canHandler(spi0, 5, 3, 4, 2, 10000000);
 pcInterface interface(luxMeter, driver, pidController, metrics, canHandler);
 
 // Instantiate the NetworkBoot class.
-NetworkBoot networkBoot(MY_NODE_ID);
+NetworkBoot networkBoot();
 
 CalibrationManager* calibrator = nullptr;
 bool calibration_ready = false;
@@ -51,31 +51,15 @@ void setup()
     analogWriteRange(DAC_RANGE);
     pinMode(LED_PIN, OUTPUT_12MA);
 
-    raspConfig(); // Configure the Raspberry Pi based on its unique ID
-
-
     if (!canHandler.begin(CAN_1000KBPS)) {
         Serial.println("CAN initialization failed!");
         while(1); // halt if CAN initialization fails
     }
     canHandler.setTransmitInterval(1000); // Set transmit interval to 1000ms
 
-    networkBoot.begin();
-    
+    raspConfig(); // Configure the Raspberry Pi based on its unique ID
+    networkBoot.begin(); // Start the network boot process
 }
-
-void receive_nodes() {
-    const uint8_t* discovered_ids = networkBoot.getDiscoveredNodeIDs();
-    int count = networkBoot.getNodeCount();
-
-    if (count > 0) {
-        if (calibrator != nullptr) delete calibrator; // cleanup if already exists
-        calibrator = new CalibrationManager(MY_NODE_ID, discovered_ids, count, 7000);
-        calibration_ready = true;
-        Serial.println("Calibration manager initialized.");
-    }
-}    
-
 
 void loop()
 {
@@ -154,49 +138,66 @@ void loop()
         interface.processIncomingCANMessages();
     }
 
-    // if (currentMillis - lastTestMessageTime >= testMessageInterval) {
-    //     lastTestMessageTime = currentMillis;
-        
-    //     // Prepare test message
-    //     uint8_t testData[8] = {0};
-    //     testData[0] = testCounter++;
-    //     testData[1] = interface.getMyId(); // Include our own ID in the message
-
-    //     bool sent = canHandler.sendMessage(1, 2, testData, sizeof(testData));
-    //     if (sent)
-    //     {
-    //         Serial.printf("Sent test message to desk 2, counter: %d\n", testCounter);
-    //     }
-    //     else
-    //     {
-    //         Serial.println("Failed to send test message");
-    //     }
-    // }
-
-//     // Check for received CAN messages
-// uint8_t receivedMessageId, receivedDeskId;
-// uint8_t receivedData[8];
-// uint8_t receivedLength;
-
-// if (canHandler.readMessage(&receivedMessageId, &receivedDeskId, receivedData, &receivedLength)) {
-//     Serial.printf("Received message from desk %d, type %d: ", receivedDeskId, receivedMessageId);
-//     for (int i = 0; i < receivedLength; i++) {
-//         Serial.printf("%02X ", receivedData[i]);
-//     }
-//     Serial.println();
-    
-//     // For test messages (type 1)
-//     if (receivedMessageId == 1) {
-//         uint8_t senderCounter = receivedData[0];
-//         uint8_t senderId = receivedData[1];
-//         Serial.printf("Test message from desk %d: counter=%d\n", senderId, senderCounter);
-//     }
-// }
+    // can_checker(); // Check for incoming CAN messages
 }
+
+void can_checker()
+{
+    if (currentMillis - lastTestMessageTime >= testMessageInterval) {
+        lastTestMessageTime = currentMillis;
+
+        // Prepare test message
+        uint8_t testData[8] = {0};
+        testData[0] = testCounter++;
+        testData[1] = interface.getMyId(); // Include our own ID in the message
+
+        bool sent = canHandler.sendMessage(1, 2, testData, sizeof(testData));
+        if (sent)
+        {
+            Serial.printf("Sent test message to desk 2, counter: %d\n", testCounter);
+        }
+        else
+        {
+            Serial.println("Failed to send test message");
+        }
+    }
+
+        // Check for received CAN messages
+    uint8_t receivedMessageId, receivedDeskId;
+    uint8_t receivedData[8];
+    uint8_t receivedLength;
+
+    if (canHandler.readMessage(&receivedMessageId, &receivedDeskId, receivedData, &receivedLength)) {
+        Serial.printf("Received message from desk %d, type %d: ", receivedDeskId, receivedMessageId);
+        for (int i = 0; i < receivedLength; i++) {
+            Serial.printf("%02X ", receivedData[i]);
+        }
+        Serial.println();
+
+        // For test messages (type 1)
+        if (receivedMessageId == 1) {
+            uint8_t senderCounter = receivedData[0];
+            uint8_t senderId = receivedData[1];
+            Serial.printf("Test message from desk %d: counter=%d\n", senderId, senderCounter);
+        }
+    }
+}
+
+void receive_nodes() {
+    const uint8_t* discovered_ids = networkBoot.getDiscoveredNodeIDs();
+    int count = networkBoot.getNodeCount();
+
+    if (count > 0) {
+        if (calibrator != nullptr) delete calibrator; // cleanup if already exists
+        calibrator = new CalibrationManager(MY_NODE_ID, discovered_ids, count, 7000);
+        calibration_ready = true;
+        Serial.println("Calibration manager initialized.");
+    }
+}    
 
 // Seting b and m according to the ID of the device (unique to each LDR sensor)
 // The specific ID checking for in byte array form
-void raspConfig() 
+void raspConfig(NetworkBoot& networkBoot) 
 {
     // ID of the device
     uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -221,6 +222,7 @@ void raspConfig()
 
         // AQUI ENTRA O CODIOGO DE boot DOS IDS
         interface.myIdInit(1); // Set the ID for the interface
+        networkBoot.myNodeId = 1; // Set the ID for the network boot
         interface.addDeskId(2); // Add the ID to the list of desks
         interface.addDeskId(3); // Add the ID to the list of desks
     }
@@ -230,6 +232,7 @@ void raspConfig()
         luxMeter.setCalibration(-0.8, 5.976); // Set the calibration coefficients for B if the ID matches
 
         interface.myIdInit(2); // Set the ID for the interface
+        networkBoot.myNodeId = 2; // Set the ID for the network boot
         interface.addDeskId(1); // Add the ID to the list of desks
         interface.addDeskId(3); // Add the ID to the list of desks
     }else if (id != nullptr && memcmp(id, targetId3, 8) == 0)
@@ -238,6 +241,7 @@ void raspConfig()
         luxMeter.setCalibration(-0.8, 5.976); // Set the calibration coefficients for C if the ID matches
 
         interface.myIdInit(3); // Set the ID for the interface
+        networkBoot.myNodeId = 3; // Set the ID for the network boot
         interface.addDeskId(1); // Add the ID to the list of desks
         interface.addDeskId(2); // Add the ID to the list of desks
     }

@@ -17,7 +17,7 @@ public:
   };
 
   // Constructor: accepts the unique node ID.
-  NetworkBoot(uint8_t id);
+  NetworkBoot();
 
   // Initializes Serial, the CAN-BUS, and starts the boot procedure.
   void begin();
@@ -25,12 +25,12 @@ public:
   // Call this method repeatedly (e.g. in loop()) to run the boot sequence.
   void update();
 
+  uint8_t myNodeId;
   uint8_t* getDiscoveredNodeIDs();
   int getNodeCount();
   bool isBootComplete();
 
 private:
-  uint8_t myNodeId;
   BootState bootState;
   unsigned long bootStartTime;
   unsigned long lastBootSentTime;

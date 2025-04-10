@@ -78,57 +78,74 @@ void pcInterface::processIncomingCANMessages()
         {
         case MSG_GET_DUTY_CYCLE:
             floatValue = driver.getDutyCycle();
+            sendCanCommand(MSG_AWN_U, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_REFERENCE:
             floatValue = controller.getReference();
+            sendCanCommand(MSG_AWN_R, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_ILLUMINANCE:
             floatValue = luxMeter.getLuxValue();
+            sendCanCommand(MSG_AWN_Y, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_VOLTAGE:
             floatValue = luxMeter.getLdrVoltage();
+            sendCanCommand(MSG_AWN_V, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_OCCUPANCY:
             intValue = controller.getOccupancy();
             floatValue = static_cast<float>(intValue);
+            sendCanCommand(MSG_AWN_O, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_ANTI_WINDUP:
             intValue = controller.getAntiWindup();
             floatValue = static_cast<float>(intValue);
+            sendCanCommand(MSG_AWN_A, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_FEEDBACK:
             intValue = controller.getFeedback();
             floatValue = static_cast<float>(intValue);
+            sendCanCommand(MSG_AWN_F, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_EXTERNAL:
             floatValue = controller.getExternal();
+            sendCanCommand(MSG_AWN_D, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_POWER:
             floatValue = dataSt.getPowerConsumption();
+            sendCanCommand(MSG_AWN_P, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_TIME:
             floatValue = millis() / 1000.0f;
+            sendCanCommand(MSG_AWN_T, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_ENERGY:
             floatValue = dataSt.getEnergy();
+            sendCanCommand(MSG_AWN_E, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_VISIBILITY_ERROR:
             floatValue = dataSt.getVisibilityError();
+            sendCanCommand(MSG_AWN_VE, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_FLICKER:
             floatValue = dataSt.getFlicker();
+            sendCanCommand(MSG_AWN_FLICKER, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_LOWER_BOUND_OCCUPIED:
             floatValue = controller.getLowerBoundOccupied();
+            sendCanCommand(MSG_AWN_LOWER_BOUND_OCCUPIED, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_LOWER_BOUND_UNOCCUPIED:
             floatValue = controller.getLowerBoundUnoccupied();
+            sendCanCommand(MSG_AWN_LOWER_BOUND_UNOCCUPIED, senderDeskId, floatValue, 0);    
             break;
         case MSG_GET_CURRENT_LOWER_BOUND:
             floatValue = controller.getOccupancy() ? controller.getLowerBoundOccupied() : controller.getLowerBoundUnoccupied();
+            sendCanCommand(MSG_AWN_CURRENT_LOWER_BOUND, senderDeskId, floatValue, 0);
             break;
         case MSG_GET_ENERGY_COST:
             // floatValue = dataSt.getEnergyCost();
+            // sendCanCommand(MSG_AWN_ENERGY_COST, senderDeskId, floatValue, 0);
             break;
 
             
@@ -141,7 +158,12 @@ void pcInterface::processIncomingCANMessages()
                 {
                     driver.setManualMode(false);
                     driver.setDutyCycle(value);
-                    driver.setManualMode(true);
+                    driver.setManualMode(true);   
+                    success = true;
+                }
+                if (value == -1.0f)
+                {
+                    driver.setManualMode(false);
                     success = true;
                 }
             }
@@ -209,17 +231,131 @@ void pcInterface::processIncomingCANMessages()
                 success = true;
             }
             break;
+
+        case MSG_AWN_U:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("u %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_R:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("r %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_Y:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("y %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_V:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("v %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_O:
+            if (length == 2)
+            {
+                intValue = data[1];
+                Serial.printf("o %d %d\n", senderDeskId, intValue);
+            }
+            break;
+        case MSG_AWN_A:
+            if (length == 2)
+            {
+                intValue = data[1];
+                Serial.printf("a %d %d\n", senderDeskId, intValue);
+            }
+            break;
+        case MSG_AWN_F:
+            if (length == 2)
+            {
+                intValue = data[1];
+                Serial.printf("f %d %d\n", senderDeskId, intValue);
+            }
+            break;
+        case MSG_AWN_D:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("d %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_P:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("p %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_T:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("t %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_E:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("E %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_VE:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("V %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_FLICKER:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("F %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_LOWER_BOUND_OCCUPIED:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("O %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_LOWER_BOUND_UNOCCUPIED:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("U %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_CURRENT_LOWER_BOUND:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("L %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
+        case MSG_AWN_ENERGY_COST:
+            if (length == sizeof(float) + 1)
+            {
+                memcpy(&floatValue, data + 1, sizeof(float));
+                Serial.printf("C %d %.3f\n", senderDeskId, floatValue);
+            }
+            break;
         case MSG_ACK:
             // Handle ACK messages if needed
             if (length == 1)
             {
                 Serial.printf("ack from %d\n", senderDeskId);
-            }
-            if (length == sizeof(float) + 2)
-            {
-                memcpy(&floatValue, data + 2, sizeof(float));
-                msgType = static_cast<MessageType>(data[1]);
-                Serial.printf(" %d %.3f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_ERROR:
@@ -227,11 +363,7 @@ void pcInterface::processIncomingCANMessages()
             return;
         }
 
-        if (msgType >= MSG_GET_DUTY_CYCLE && msgType <= MSG_GET_ENERGY_COST)
-        {
-            sendCanCommand(MSG_ACK, senderDeskId, floatValue, 0);
-        }
-        else if (msgType >= MSG_SET_DUTY_CYCLE && msgType <= MSG_SET_ENERGY_COST)
+        if (success)
         {
             sendCanCommand(MSG_ACK, senderDeskId, 0.0f, 0);
         }
@@ -878,100 +1010,34 @@ void pcInterface::sendDataResponse(MessageType msgType, int deskId, int value)
 
 void pcInterface::handleRemoteCommand(MessageType msgType, uint8_t targetDeskId, std::vector<std::string> tokens)
 {
-    float value = 0.0f;
     // if Get commands
     if (msgType >= MSG_GET_DUTY_CYCLE && msgType <= MSG_GET_ENERGY_COST)
     {
-        if (!sendCanCommand(msgType, targetDeskId))
+        if (!sendCanCommand(msgType, targetDeskId, 0.0f, 0))
         {
             sendResponse(MSG_ERROR, "failed to send command to desk %d", targetDeskId);
         }
-        value = waitForCanResponse(targetDeskId);
-        if (value == 0.0f)
+    }else if (msgType >= MSG_SET_DUTY_CYCLE && msgType <= MSG_SET_ENERGY_COST)
+    {
+        float floatValue = 0.0f;
+        int intValue = 0;
+        bool isFloatCommand = (msgType != MSG_SET_OCCUPANCY &&
+                               msgType != MSG_SET_ANTI_WINDUP &&
+                               msgType != MSG_SET_FEEDBACK);
+
+        if (isFloatCommand)
         {
-            sendResponse(MSG_ERROR, "no ack from desk %d", targetDeskId);
-        }
-        else if (msgType == MSG_GET_DUTY_CYCLE)
-        {
-            sendResponse(MSG_ERROR, "u %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_REFERENCE)
-        {
-            sendResponse(MSG_ERROR, "r %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_ILLUMINANCE)
-        {
-            sendResponse(MSG_ERROR, "y %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_VOLTAGE)
-        {
-            sendResponse(MSG_ERROR, "v %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_OCCUPANCY)
-        {
-            sendResponse(MSG_ERROR, "o %d %d\n", targetDeskId, static_cast<int>(value));
-        }
-        else if (msgType == MSG_GET_ANTI_WINDUP)
-        {
-            sendResponse(MSG_ERROR, "a %d %d\n", targetDeskId, static_cast<int>(value));
-        }
-        else if (msgType == MSG_GET_FEEDBACK)
-        {
-            sendResponse(MSG_ERROR, "f %d %d\n", targetDeskId, static_cast<int>(value));
-        }
-        else if (msgType == MSG_GET_EXTERNAL)
-        {
-            sendResponse(MSG_ERROR, "d %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_POWER)
-        {
-            sendResponse(MSG_ERROR, "p %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_TIME)
-        {
-            sendResponse(MSG_ERROR, "t %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_ENERGY)
-        {
-            sendResponse(MSG_ERROR, "E %d %.3f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_VISIBILITY_ERROR)
-        {
-            sendResponse(MSG_ERROR, "V %d %.3f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_FLICKER)
-        {
-            sendResponse(MSG_ERROR, "F %d %.6f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_LOWER_BOUND_OCCUPIED)
-        {
-            sendResponse(MSG_ERROR, "O %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_LOWER_BOUND_UNOCCUPIED)
-        {
-            sendResponse(MSG_ERROR, "U %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_CURRENT_LOWER_BOUND)
-        {
-            sendResponse(MSG_ERROR, "L %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_ENERGY_COST)
-        {
-            // sendResponse(MSG_ERROR, "C %d %.2f\n", targetDeskId, value);
-        }
-        else if (msgType == MSG_GET_BUFFER_U)
-        {
-            // Handle buffer request here
-        }
-        else if (msgType == MSG_GET_BUFFER_Y)
-        {
-            // Handle buffer request here
+            floatValue = extractValue(tokens[2].c_str());
         }
         else
         {
-            sendResponse(MSG_ERROR, "no ack from desk %d", targetDeskId);
+            intValue = atoi(tokens[2].c_str());
         }
-        return;
+
+        if (!sendCanCommand(msgType, targetDeskId, floatValue, intValue))
+        {
+            sendResponse(MSG_ERROR, "failed to send command to desk %d", targetDeskId);
+        }
     }
     else
     {
@@ -1070,7 +1136,11 @@ bool pcInterface::sendCanCommand(MessageType msgType, uint8_t targetDeskId, floa
         }
     }
 
-    if (msgType == MSG_ACK && value != 0.0f)
+    if (msgType == MSG_AWN_U || msgType == MSG_AWN_R || msgType == MSG_AWN_Y || msgType == MSG_AWN_V ||
+        msgType == MSG_AWN_O || msgType == MSG_AWN_A || msgType == MSG_AWN_F || msgType == MSG_AWN_D ||
+        msgType == MSG_AWN_P || msgType == MSG_AWN_T || msgType == MSG_AWN_E || msgType == MSG_AWN_VE ||
+        msgType == MSG_AWN_FLICKER || msgType == MSG_AWN_LOWER_BOUND_OCCUPIED || msgType == MSG_AWN_LOWER_BOUND_UNOCCUPIED ||
+        msgType == MSG_AWN_CURRENT_LOWER_BOUND || msgType == MSG_AWN_ENERGY_COST)
     {
         // For ACK messages, we include the value in the message
         memcpy(data + 1, &value, sizeof(float));
@@ -1081,51 +1151,20 @@ bool pcInterface::sendCanCommand(MessageType msgType, uint8_t targetDeskId, floa
         // For ACK messages, we only need the target desk ID
         length = 1; // 1 byte for target desk ID
     }
-    // // Debug output
-    // Serial.printf("[CAN TX] Sending message type %d from desk %d to desk %d, data: ",
-    //               msgType, myDeskId, targetDeskId);
-    // for (int i = 0; i < length; i++)
-    // {
-    //     Serial.printf("%02X ", data[i]);
-    // }
-    // Serial.println();
+    // Debug output
+    Serial.printf("[CAN TX] Sending message type %d from desk %d to desk %d, data: ",
+                  msgType, myDeskId, targetDeskId);
+    for (int i = 0; i < length; i++)
+    {
+        Serial.printf("%02X ", data[i]);
+    }
+    Serial.println();
 
     uint8_t msgTypeId = static_cast<uint8_t>(msgType);
 
     // Send using our own deskId in the CAN ID
     return canHandler.sendMessage(msgTypeId, myDeskId, data, length);
 }
-
-float pcInterface::waitForCanResponse(uint8_t expectedDeskId)
-{
-    uint8_t messageId = 0, senderDeskId = 0, data[8], length = 0;
-    float floatValue = 0.0f;
-    int intValue = 0;
-    bool success = false;
-    MessageType msgType;
-
-    if (canHandler.readMessage(&messageId, &senderDeskId, data, &length))
-    {
-        if (length < 1 || data[0] != myDeskId)
-            return;
-
-        msgType = static_cast<MessageType>(messageId);
-    
-        if (msgType == MSG_ACK && senderDeskId == expectedDeskId)
-        {
-            if (length == sizeof(float) + 2)
-            {
-                memcpy(&floatValue, data + 2, sizeof(float));
-                msgType = static_cast<MessageType>(data[1]);
-                Serial.printf(" %d %.3f\n", senderDeskId, floatValue);
-            }
-            return floatValue;
-        }
-    }
-    return 0.0f; // No response received
-}
-
-
 
 
 bool pcInterface::isNotValidID(int id)

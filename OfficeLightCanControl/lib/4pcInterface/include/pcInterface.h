@@ -67,6 +67,26 @@ enum MessageType
     MSG_STREAM_STOP_ALL, // S all
 
     // Response types
+    MSG_AWN_U,
+    MSG_AWN_R,
+    MSG_AWN_Y,
+    MSG_AWN_V,
+    MSG_AWN_O,
+    MSG_AWN_A,
+    MSG_AWN_F,
+    MSG_AWN_D,
+    MSG_AWN_P,
+    MSG_AWN_T,
+    MSG_AWN_E,
+    MSG_AWN_VE,
+    MSG_AWN_FLICKER,
+    MSG_AWN_LOWER_BOUND_OCCUPIED,
+    MSG_AWN_LOWER_BOUND_UNOCCUPIED,
+    MSG_AWN_CURRENT_LOWER_BOUND,
+    MSG_AWN_ENERGY_COST,
+    MSG_AWN_BUFFER_U,
+    MSG_AWN_BUFFER_Y,
+    
     MSG_ACK,
     MSG_ERROR
 };
@@ -117,8 +137,6 @@ private:
     
 
     bool sendCanCommand(MessageType msgType, uint8_t targetDeskId, float value = 0.0f, int intValue = 0);
-    bool waitForCanResponse(uint8_t expectedDeskId);
-
 
     bool isNotValidID(int id);
     uint8_t extractDeskId(const char* cmd);

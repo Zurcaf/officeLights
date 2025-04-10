@@ -38,7 +38,7 @@ float localController::compute_control()
     float P = _Tk * (_b * _r - _y); // Proportional Term
 
     float ut = 0;
-    float d = _y - (_gain * _u );  // Force floating-point division
+    float d = _y - (_gain * (_u * 4095.0f));
     float uff = (4095.0f / _gain) * _r - d;
     if (_feedback){
        ut = P + _I;

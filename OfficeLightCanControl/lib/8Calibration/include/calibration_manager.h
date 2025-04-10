@@ -30,9 +30,11 @@ class CalibrationManager {
 public:
     // Constructor
     CalibrationManager(int id, const uint8_t* ids, int count, unsigned long measure_time);
+
     const float* getAllGains() const;  // Get pointer to the entire gain row
     float getOwnGain() const;          // Get this node's self gain (K_ii)
     float getOffset() const;
+    int getNodeIndex(uint8_t sender_id);
 
     // API
     void startCalibration();
@@ -57,6 +59,7 @@ private:
     // Member variables
     uint8_t node_ids[MAX_NODES];
     float K_row[MAX_NODES];
+    bool ack_flags[MAX_NODES];
 
     uint8_t node_id;
     int my_index = -1;

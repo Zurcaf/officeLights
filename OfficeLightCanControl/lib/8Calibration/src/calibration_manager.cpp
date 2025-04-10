@@ -90,7 +90,7 @@ void CalibrationManager::moveToNextNode() {
 }
 
 float CalibrationManager::readLux() {
-    return LuxMeter.getLuxValue();
+    return luxMeter.getLuxValue();
 }
 
 void CalibrationManager::setPWM(float duty) {

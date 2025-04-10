@@ -29,7 +29,8 @@ float localController::compute_control()
 {
     updateExternal();
     // Compute feedforward term
-    _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain (NO CODIGO DO ABREU ESTA uff = ((r*(1/g)*4096) - d);)
+    // _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain (NO CODIGO DO ABREU ESTA 
+    _v = ((_r*(1/_gain)*4096) - _external);
 
     // Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
 
@@ -55,10 +56,10 @@ float localController::compute_control()
     // Limit control output to range [0, 1]
     if (_v < 0)
         _u = 0;
-    if (_v > 1)
-        _u = 1;
+    if (_v > 4096)
+        _u = 4096;
 
-    return _u; // Return the computed control signal
+    return _u / 4096; // Return the computed control signal
 }
 
 // Inline implementation of housekeep to update integral term and store previous output
@@ -137,7 +138,7 @@ void localController::constantCalc()
 void localController::updateExternal()
 {
     // Update the external illuminance
-    _external = _y - (_gain * _u); // Calculate the external illuminance based on the measured output and control signal
+    _external = _y - (_gain * _u / 4096); // Calculate the external illuminance based on the measured output and control signal
     // Serial.printf("External: %.2f, Gain: %.2f, Duty Cycle: %.2f, LDR: %.2f\n", _external, _gain, _u, _y); // Debug output
 
 }

@@ -9,13 +9,14 @@ NetworkBoot::NetworkBoot()
     lastBootSentTime(0),
     nodeCount(0)
     
-{bootedNodes[nodeCount++] = myNodeId;}
+{}
 
 void NetworkBoot::begin() {
   // Start the boot procedure.
   bootState = BOOT_BROADCAST;
   bootStartTime = millis();
   lastBootSentTime = 0;
+  bootedNodes[nodeCount++] = myNodeId;
 }
 
 void NetworkBoot::update() {

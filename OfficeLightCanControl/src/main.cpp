@@ -101,6 +101,7 @@ void loop()
         LastUpdate_500Hz = currentMillis;
         
         luxMeter.updateMovingAverage();
+        mutex_exit(&luxMeterMutex);
     }
 
     if (currentMillis - LastUpdate_100Hz >= FREQ_100Hz) {

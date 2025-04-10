@@ -108,15 +108,6 @@ void CalibrationManager::setPWM(float duty) {
     Serial.println(" %");
 }
 
-int CalibrationManager::getNodeIndex(uint8_t sender_id) {
-    for (int i = 0; i < MAX_NODES; ++i) {
-        if (node_ids[i] == sender_id) {
-            return i;
-        }
-    }
-    return -1; // Not found
-}
-
 void CalibrationManager::receiveCANMessages() {
     MCP2515::ERROR err;
     struct can_frame canMsgRx;
@@ -136,29 +127,13 @@ void CalibrationManager::receiveCANMessages() {
                 current_light_id = sender_id;
                 break;
 
-                case ACK:
+            case ACK:
                 if (canMsgRx.data[0] == node_id) {
-                    int index = getNodeIndex(sender_id);
-                    if (index != -1) {
-                        if (!ack_flags[index]) {
-                            ack_flags[index] = true;
-                            acks_received++;
-                            Serial.print("[ACK] New ACK from node ");
-                            Serial.print(sender_id);
-                            Serial.print(" (index ");
-                            Serial.print(index);
-                            Serial.print("). Total ACKs: ");
-                            Serial.println(acks_received);
-                        } else {
-                            Serial.print("[ACK] Duplicate ACK from node ");
-                            Serial.println(sender_id);
-                        }
-                    } else {
-                        Serial.print("[ACK] Unknown sender ID: ");
-                        Serial.println(sender_id);
-                    }
+                    acks_received++;
+                    Serial.print("[ACK] Received ACK. Total now: ");
+                    Serial.println(acks_received);
                 }
-                break;            
+                break;
 
             case LOW_LIGHT:
                 ml = readLux();

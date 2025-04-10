@@ -5,7 +5,6 @@
 #include "hardware/flash.h"
 #include <SPI.h>
 #include <mcp2515.h>
-#include <mutex>
 
 
 #include <luxmeter.h>
@@ -50,5 +49,8 @@ void receive_nodes();
 void raspConfig();
 void calibrate_Mb ();
 void calibrate_Gd ();
+
+void core1_entry();
+void core1_loop();
 
 #endif // HARDWARE_CONFIG_H

@@ -18,7 +18,7 @@
 // Command message IDs
 enum MessageType
 {
-    MSG_RESET = 0,
+    MSG_RESET = 1,
 
     // Get commands
     MSG_GET_DUTY_CYCLE,             // g u
@@ -75,14 +75,18 @@ class pcInterface {
 public:
     pcInterface(LuxMeter &luxM, Driver &driv, localController &ctrl,
                 dataStorageMetrics &storage, CANHandler &canHandler);
+
     void begin(uint32_t baudRate);
     void processSerial();
     void streamSerialData(float u, float y, float r, float v, unsigned long time);
+
     void processIncomingCANMessages();
-    void myIdInit(int id);
-    int getMyId() const { return myDeskId; } // Getter for myDeskId
-    void addDeskId(int id);
+
+    // ID management
     int myDeskId;
+    void myIdInit(int id);
+    void addDeskId(int id);
+    int getMyId() const { return myDeskId; } // Getter for myDeskId
 
 private:
     int numDesks;
@@ -103,19 +107,24 @@ private:
     bool streaming_v = false;
 
     void parseCommand(const char* cmd);
-    bool isNotValidID(int id);
+
     void handleCommand(MessageType msgType, std::vector<std::string> tokens);
-    
     void sendResponse(MessageType msgType, const char* format, ...);
+
+    void handleRemoteCommand(MessageType msgType, uint8_t targetDeskId, std::vector<std::string> tokens);
     void sendDataResponse(MessageType msgType, int deskId, float value);
     void sendDataResponse(MessageType msgType, int deskId, int value);
+    
+
+    bool sendCanCommand(MessageType msgType, uint8_t targetDeskId, float value = 0.0f, int intValue = 0);
+    bool waitForCanResponse(uint8_t expectedDeskId);
+
+
+    bool isNotValidID(int id);
     uint8_t extractDeskId(const char* cmd);
     float extractValue(const char* cmd);
     void resetSystem();
 
-    bool sendCanCommand(MessageType msgType, uint8_t targetDeskId, float value = 0.0f, int intValue = 0);
-    bool waitForCanResponse(MessageType expectedMsgType, uint8_t expectedDeskId, float* outValue = nullptr, int* outIntValue = nullptr);
-    void handleRemoteCommand(MessageType msgType, uint8_t targetDeskId, std::vector<std::string> tokens);
 };
 
 #endif

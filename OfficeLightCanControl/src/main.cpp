@@ -86,15 +86,14 @@ void loop()
         metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
 
         // Check interface for incoming messages
+        // This also sends the Can messages to the other desks
         interface.processSerial();
-
-        float voltage = luxMeter.getLdrVoltage(); // Get the LDR voltage value
-
-        // Stream Serial data to the PC
-        interface.streamSerialData(dutyCycle, measuredLux, reference, voltage, currentMillis);
 
         // Process incoming CAN messages
         interface.processIncomingCANMessages();
+
+        // Stream Serial data to the PC
+        interface.streamSerialData(dutyCycle, measuredLux, reference, luxMeter.getLdrVoltage(), currentMillis);
     }
 
     // if (currentMillis - lastTestMessageTime >= testMessageInterval) {

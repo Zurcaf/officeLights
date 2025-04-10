@@ -189,7 +189,7 @@ void receive_nodes() {
 
     if (count > 0) {
         if (calibrator != nullptr) delete calibrator; // cleanup if already exists
-        calibrator = new CalibrationManager(networkBoot.myNodeId, discovered_ids, count, 7000);
+        calibrator = new CalibrationManager(networkBoot.myNodeId, discovered_ids, count, 2000);
         calibration_ready = true;
         Serial.println("Calibration manager initialized.");
     }

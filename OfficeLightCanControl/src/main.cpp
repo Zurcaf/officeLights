@@ -1,6 +1,5 @@
 #include <0configs.h>
 
-#define MY_NODE_ID 2
 #define MAX_NODES 3
 
 unsigned long lastTestMessageTime = 0;

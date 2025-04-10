@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "mcp2515.h"
+#include "luxmeter.h"
 
 #define MAX_NODES 3  // Adjust as needed
 

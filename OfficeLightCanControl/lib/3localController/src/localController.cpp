@@ -39,7 +39,7 @@ float localController::compute_control()
 
     float ut = 0;
     float d = _y - (_gain * _u );  // Force floating-point division
-    float uff = ((_r*(1/_gain)*4095) - d);
+    float uff = (4095.0f / _gain) * _r - d;
     if (_feedback){
        ut = P + _I;
     }
@@ -51,8 +51,8 @@ float localController::compute_control()
     if (ut < 0) {
         u_sat = 0;
     }
-    if (ut > 4096) {
-        u_sat = 4096;
+    if (ut > 4095) {
+        u_sat = 4095;
     }
 
     // Anti-Windup with Back Calculation
@@ -62,7 +62,7 @@ float localController::compute_control()
 
     //housekeep(r, y); // Update integral and previous measurement
 
-    return u_sat;
+    return u_sat/4095;
 }
 
 // Inline implementation of housekeep to update integral term and store previous output

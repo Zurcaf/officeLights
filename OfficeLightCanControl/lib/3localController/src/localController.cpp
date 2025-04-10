@@ -37,8 +37,8 @@ float localController::compute_control()
 {
     updateExternal();
     // Compute feedforward term
-    // _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain (NO CODIGO DO ABREU ESTA 
-    _v = ((_r*(1/_gain)*4096) - _external);
+    _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain (NO CODIGO DO ABREU ESTA 
+    // _v = ((_r*(1/_gain)*4096) - _external);
 
     // Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
 

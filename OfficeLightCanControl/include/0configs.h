@@ -44,23 +44,11 @@ constexpr float STEP_SIZE = 0.1;
 // bootloader configurations
 #define MAX_NODES 3
 
-// Mutex declarations for shared resources
-mutex_t luxMeterMutex;
-mutex_t driverMutex;
-mutex_t pidMutex;
-mutex_t canMutex;
-mutex_t metricsMutex;
-mutex_t calibratorMutex;
-
-mutex_t serialMutex;
 
 void can_checker();
 void receive_nodes();
 void raspConfig();
 void calibrate_Mb ();
 void calibrate_Gd ();
-
-void core1_entry();
-void core1_loop();
 
 #endif // HARDWARE_CONFIG_H

@@ -50,7 +50,4 @@ void raspConfig();
 void calibrate_Mb ();
 void calibrate_Gd ();
 
-void core1_entry();
-void core1_loop();
-
 #endif // HARDWARE_CONFIG_H

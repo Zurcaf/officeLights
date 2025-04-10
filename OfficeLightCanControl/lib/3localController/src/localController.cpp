@@ -35,34 +35,39 @@ localController::~localController()
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
-    float P = _Tk * (_b * _r - _y); // Proportional Term
+    updateExternal();
+    // Compute feedforward term
+    _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain (NO CODIGO DO ABREU ESTA 
+    // _v = ((_r*(1/_gain)*4096) - _external);
 
-    float ut = 0;
-    float d = _y - (_gain * (_u * 4095.0f));
-    float uff = (4095.0f / _gain) * _r - d;
-    if (_feedback){
-       ut = P + _I;
-    }
-    ut = ut + uff;
+    // Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
 
-    float u_sat = ut; 
-
-    // Saturation Limits
-    if (ut < 0) {
-        u_sat = 0;
-    }
-    if (ut > 4095) {
-        u_sat = 4095;
+    if (!_feedback)
+    {
+        _u = _v; // If feedback is disabled, set control output to feedforward term
+        return _u; // Return the computed control signal
     }
 
-    // Anti-Windup with Back Calculation
-    float K_aw = 1 / _Tt; // Anti-Windup Gain 
-    _I += (_Tk * _h / _Ti) * (_r - _y) + K_aw * (u_sat - ut) * _h;
+    if (_integratorOnly)
+    {
+        _v += _r * _b + _I; // Total control output: sum of proportional, integral, and derivative terms
+    }
+    else
+    {
+        float P = _k_x_b * _error;          // Proportional term: product of proportional gain and error
+        _D = _ad * _D - _bd * (_y - _yOld); // Update derivative term using filter and difference of outputs
+        _v += P + _I + _D;                  // Total control output: sum of proportional, integral, and derivative terms
+    }
 
+    _u = _v; // Control output is the desired output
 
-    //housekeep(r, y); // Update integral and previous measurement
+    // Limit control output to range [0, 1]
+    if (_v < 0)
+        _u = 0;
+    if (_v > 4096)
+        _u = 4096;
 
-    return u_sat/4095;
+    return _u / 4096; // Return the computed control signal
 }
 
 // Inline implementation of housekeep to update integral term and store previous output

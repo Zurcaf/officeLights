@@ -236,28 +236,28 @@ void pcInterface::processIncomingCANMessages()
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("u %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("u %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_R:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("r %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("r %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_Y:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("y %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("y %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_V:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("v %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("v %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_O:
@@ -285,14 +285,14 @@ void pcInterface::processIncomingCANMessages()
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("d %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("d %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_P:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("p %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("p %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_T:
@@ -320,35 +320,35 @@ void pcInterface::processIncomingCANMessages()
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("F %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("F %d %.6f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_LOWER_BOUND_OCCUPIED:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("O %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("O %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_LOWER_BOUND_UNOCCUPIED:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("U %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("U %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_CURRENT_LOWER_BOUND:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("L %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("L %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_AWN_ENERGY_COST:
             if (length == sizeof(float) + 1)
             {
                 memcpy(&floatValue, data + 1, sizeof(float));
-                Serial.printf("C %d %.3f\n", senderDeskId, floatValue);
+                Serial.printf("C %d %.2f\n", senderDeskId, floatValue);
             }
             break;
         case MSG_ACK:
@@ -583,8 +583,6 @@ void pcInterface::parseCommand(const char *cmd)
 
     handleCommand(msgType, tokens);
 }
-
-
 
 
 void pcInterface::handleCommand(MessageType msgType, std::vector<std::string> tokens)
@@ -1004,8 +1002,6 @@ void pcInterface::sendDataResponse(MessageType msgType, int deskId, int value)
         break;
     }
 }
-
-
 
 
 void pcInterface::handleRemoteCommand(MessageType msgType, uint8_t targetDeskId, std::vector<std::string> tokens)

@@ -1,3 +1,29 @@
+ToDo List
+
+Fixes:
+occupancy states!! 
+anti-windup!!
+feddback!!
+
+occupancy should make it high or low but it starts on low and that is the reference!
+L is sending an Ocupancy ack or Unoccupaide ACK also localy
+
+implement c
+
+Set commands are not gettin ACKs for thw local commands! 
+manualmode desabled is not sent for other nodes and needs a \n in local
+
+antiwind up is not sending acks nos remotes
+
+
+
+
+
+
+
+
+
+
 Classes
 - change format of inicialization and test not having values in Constructor
 

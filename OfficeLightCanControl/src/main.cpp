@@ -37,7 +37,7 @@ CANHandler canHandler(spi0, 5, 3, 4, 2, 10000000);
 pcInterface interface(luxMeter, driver, pidController, metrics, canHandler);
 
 // Instantiate the NetworkBoot class.
-NetworkBoot networkBoot();
+NetworkBoot networkBoot;
 
 CalibrationManager* calibrator = nullptr;
 bool calibration_ready = false;
@@ -189,7 +189,7 @@ void receive_nodes() {
 
     if (count > 0) {
         if (calibrator != nullptr) delete calibrator; // cleanup if already exists
-        calibrator = new CalibrationManager(MY_NODE_ID, discovered_ids, count, 7000);
+        calibrator = new CalibrationManager(networkBoot.myNodeId, discovered_ids, count, 7000);
         calibration_ready = true;
         Serial.println("Calibration manager initialized.");
     }
@@ -197,7 +197,7 @@ void receive_nodes() {
 
 // Seting b and m according to the ID of the device (unique to each LDR sensor)
 // The specific ID checking for in byte array form
-void raspConfig(NetworkBoot& networkBoot) 
+void raspConfig() 
 {
     // ID of the device
     uint8_t id[8] = {0, 0, 0, 0, 0, 0, 0, 0};

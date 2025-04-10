@@ -27,8 +27,9 @@ localController::~localController()
 // Compute the control output (u) using PID formula
 float localController::compute_control()
 {
+    updateExternal();
     // Compute feedforward term
-    _v = (_r - _offset) / _gain; // Feedforward term: reference minus external illuminance divided by gain
+    _v = (_r - _external) / _gain; // Feedforward term: reference minus external illuminance divided by gain (NO CODIGO DO ABREU ESTA uff = ((r*(1/g)*4096) - d);)
 
     // Serial.printf("r: %.2f, external: %.2f, gain: %.2f, v: %.2f\n", _r, _external, _gain, _v); // Debug output
 

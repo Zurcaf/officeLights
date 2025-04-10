@@ -12,7 +12,6 @@ constexpr uint16_t DESK_ID_MASK = 0x001F;    // 5 bits
 CANHandler::CANHandler(spi_inst_t *spi, uint8_t cs_pin, uint8_t tx_pin, 
                      uint8_t rx_pin, uint8_t sck_pin, uint32_t spi_clock_speed)
     : m_can(spi, cs_pin, tx_pin, rx_pin, sck_pin, spi_clock_speed),
-      m_transmit_interval(1000),
       m_last_transmit_time(0),
       m_counter(0)
 {
@@ -78,12 +77,6 @@ bool CANHandler::readMessage(uint8_t *messageId, uint8_t *deskId, uint8_t *data,
         memcpy(data, frame.data, frame.can_dlc);
         return true;
     }
-
-    // if (err != MCP2515::ERROR_OK) {
-    //     snprintf(m_print_buffer, sizeof(m_print_buffer), 
-    //              "Failed to read message, error: %d\n", err);
-    //     printToSerial(m_print_buffer);
-    // }
     
     return false;
 }
@@ -97,12 +90,11 @@ uint8_t CANHandler::getNodeAddress() const {
     return m_node_address;
 }
 
-void CANHandler::setTransmitInterval(unsigned long interval) {
-    m_transmit_interval = interval;
-}
+
 
 // void CANHandler::process() {
 //     unsigned long current_time = millis();
+    // int m_transmit_interval = 1000; // Example interval in milliseconds
     
 //     // Handle transmission
 //     if (current_time - m_last_transmit_time >= m_transmit_interval) {

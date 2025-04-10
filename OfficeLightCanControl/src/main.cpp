@@ -1,8 +1,5 @@
 #include <0configs.h>
 
-#define MY_NODE_ID 2
-#define MAX_NODES 3
-
 unsigned long lastTestMessageTime = 0;
 const unsigned long testMessageInterval = 1000; // Send every 1 second
 uint8_t testCounter = 0;
@@ -31,7 +28,7 @@ localController pidController;
 dataStorageMetrics metrics;
 
 // Create CAN handler instance with your SPI configuration
-CANHandler canHandler(spi0, 5, 3, 4, 2, 10000000);
+CANHandler canHandler(spi0, CAN_CS, SPI_MOSI, SPI_MISO, SPI_SCK, SPI_CLK_SPEED);
 
 // Instantiate the NetworkBoot class.
 NetworkBoot networkBoot;
@@ -45,6 +42,15 @@ pcInterface interface(luxMeter, driver, pidController, metrics, canHandler);
 
 void setup()
 {
+    // Initialize mutexes
+    mutex_init(&luxMeterMutex);
+    mutex_init(&driverMutex);
+    mutex_init(&pidMutex);
+    mutex_init(&canMutex);
+    mutex_init(&metricsMutex);
+    mutex_init(&calibratorMutex);
+    mutex_init(&serialMutex);
+    
     interface.begin(115200); // Start serial communication with PC
 
     analogReadResolution(12);
@@ -56,89 +62,150 @@ void setup()
         Serial.println("CAN initialization failed!");
         while(1); // halt if CAN initialization fails
     }
-    canHandler.setTransmitInterval(1000); // Set transmit interval to 1000ms
 
     raspConfig(); // Configure the Raspberry Pi based on its unique ID
     networkBoot.begin(); // Start the network boot process
+
+    // if (!networkBoot.isBootComplete()) {
+    //     calibration_ready = false;
+    //     networkBoot.update();
+    //     return;
+    // }
+
+    // // Handle calibration initialization
+    // if (networkBoot.isBootComplete() && !calibration_ready) {
+    //     receive_nodes();
+    //     return;
+    // }
+    // // --- Step 3: Run Calibration Once ---
+    // if (calibrator && !calibrator->isCalibrationComplete()) {
+    //     calibrator->startCalibration();
+    //     return;
+    // }
+
+    // if (calibrator->isCalibrationComplete() && !gains_stashed) {
+    //     const float* receivedGains = calibrator->getAllGains();
+    //     for (int i = 0; i < MAX_NODES; ++i) {
+    //         gains[i] = receivedGains[i];
+    //     }
+    //     gain = calibrator->getOwnGain();
+    //     float offset = calibrator->getOffset();
+    //     driver.setGainOffset(gain, offset);
+    //     pidController.setGainAndExternal(gain, offset); // Set the gain and external illuminance in the controller
+    //     gains_stashed = true;
+    //     return;
+    // }
+
+    // Launch Core 1 tasks
+    multicore_launch_core1(core1_entry);
 }
+
+
+
+
+void core1_entry() {
+    // Core 1 will handle CAN communication and network boot
+    while (true) {
+        core1_loop();
+    }
+}
+
+void core1_loop() {
+    // Process serial interface
+    mutex_enter_blocking(&luxMeterMutex);
+    mutex_enter_blocking(&driverMutex);
+    mutex_enter_blocking(&pidMutex);
+    mutex_enter_blocking(&metricsMutex);
+    interface.processSerial();
+    mutex_exit(&metricsMutex);
+    mutex_exit(&pidMutex);
+    mutex_exit(&driverMutex);
+    mutex_exit(&luxMeterMutex);
+
+    mutex_enter_blocking(&luxMeterMutex);
+    mutex_enter_blocking(&driverMutex);
+    mutex_enter_blocking(&pidMutex);
+    mutex_enter_blocking(&metricsMutex);
+    // Process CAN messages (thread-safe)
+    interface.processIncomingCANMessages();
+    mutex_exit(&metricsMutex);
+    mutex_exit(&pidMutex);
+    mutex_exit(&driverMutex);
+    mutex_exit(&luxMeterMutex);
+
+    
+
+    // CAN checker if needed
+    // can_checker();
+}
+
 
 void loop()
 {
-    if (!networkBoot.isBootComplete()){
-        calibration_ready = false;
-        networkBoot.update(); // keep booting
-        return;
-    }
+    // mutex_enter_blocking(&calibratorMutex);
+    // if (!gains_stashed)
+    // {
+    //     delay(100);
+    //     return;
+    // }
+    // mutex_exit(&calibratorMutex);
 
-    // --- Step 2: Initialize Calibration ---
-    if (networkBoot.isBootComplete() && !calibration_ready){
-        receive_nodes();  // sets calibration_ready = true
-        return;
-    }
+    // Core 0 will handle real-time control and measurements
+    currentMillis = millis();
 
-    // --- Step 3: Run Calibration Once ---
-    if (calibrator && !calibrator->isCalibrationComplete()) {
-        calibrator->startCalibration();
-        return;
-    }
-
-    if (calibrator->isCalibrationComplete() && !gains_stashed) {
-        const float* receivedGains = calibrator->getAllGains();
-        for (int i = 0; i < MAX_NODES; ++i) {
-            gains[i] = receivedGains[i];
-        }
-        gain = calibrator->getOwnGain();
-        float offset = calibrator->getOffset();
-        driver.setGainOffset(gain, offset);
-        pidController.setGainAndExternal(gain, offset); // Set the gain and external illuminance in the controller
-        gains_stashed = true;
-        return;
-    }
-
-    currentMillis = millis(); // Get the current time in milliseconds
-
-    if (currentMillis - LastUpdate_500Hz >= FREQ_500Hz)
-    {
+    if (currentMillis - LastUpdate_500Hz >= FREQ_500Hz) {
         LastUpdate_500Hz = currentMillis;
-
-        // Get current lux value
+        
+        mutex_enter_blocking(&luxMeterMutex);
         luxMeter.updateMovingAverage();
+        mutex_exit(&luxMeterMutex);
     }
 
-    if (currentMillis - LastUpdate_100Hz >= FREQ_100Hz)
-    {
+    if (currentMillis - LastUpdate_100Hz >= FREQ_100Hz) {
         LastUpdate_100Hz = currentMillis;
 
-        // Get the current lux value
+        // Get lux value (thread-safe)
+        mutex_enter_blocking(&luxMeterMutex);
         float measuredLux = luxMeter.getLuxValue();
+        mutex_exit(&luxMeterMutex);
 
-        // Update PID controller
-        float dutyCycle = pidController.compute_control(); // Compute control output based on reference (r) and measured output (y)
+        // PID control (thread-safe)
+        mutex_enter_blocking(&pidMutex);
+        float dutyCycle = pidController.compute_control();
+        mutex_exit(&pidMutex);
 
-        // Set the duty cycle (0-100%) using the Driver
+        // Set duty cycle (thread-safe)
+        mutex_enter_blocking(&driverMutex);
         dutyCycle = driver.setDutyCycle(dutyCycle);
+        mutex_exit(&driverMutex);
 
-        // Update internal state (housekeeping) for the PID controller
+        // Update PID (thread-safe)
+        mutex_enter_blocking(&pidMutex);
         pidController.housekeep(measuredLux);
+        reference = pidController.getReference();
+        mutex_exit(&pidMutex);
 
-        reference = pidController.getReference(); // Set the duty cycle in the PID controller
-
-        // Insert values into the metrics buffer
+        // Update metrics (thread-safe)
+        mutex_enter_blocking(&metricsMutex);
         metrics.insertValues(dutyCycle, measuredLux, reference, currentMillis);
+        mutex_exit(&metricsMutex);
 
-        // Check interface for incoming messages
-        interface.processSerial();
+        // Get voltage (thread-safe)
+        mutex_enter_blocking(&luxMeterMutex);
+        float voltage = luxMeter.getLdrVoltage();
+        mutex_exit(&luxMeterMutex);
 
-        float voltage = luxMeter.getLdrVoltage(); // Get the LDR voltage value
-
-        // Stream Serial data to the PC
-        interface.streamSerialData(dutyCycle, measuredLux, reference, voltage, currentMillis);
-
-        // Process incoming CAN messages
-        interface.processIncomingCANMessages();
+        // mutex_enter_blocking(&luxMeterMutex);
+        // mutex_enter_blocking(&driverMutex);
+        // mutex_enter_blocking(&pidMutex);
+        // mutex_enter_blocking(&metricsMutex);
+        // // Stream data (serial is thread-safe by nature)
+        // interface.streamSerialData(dutyCycle, measuredLux, reference, voltage, currentMillis);
+        // mutex_exit(&metricsMutex);
+        // mutex_exit(&pidMutex);
+        // mutex_exit(&driverMutex);
+        // mutex_exit(&luxMeterMutex);
     }
-
-    // can_checker(); // Check for incoming CAN messages
 }
 
 void can_checker()

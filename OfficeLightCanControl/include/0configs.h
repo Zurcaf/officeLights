@@ -13,6 +13,8 @@
 #include <pcInterface.h>
 #include <dataStorageMetrics.h> 
 #include "CANHandler.h"
+#include "networkboot.h"
+#include "calibration_manager.h"
 
 // Pin Definitions
 #define LED_PIN 15

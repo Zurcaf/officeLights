@@ -1107,7 +1107,7 @@ float pcInterface::waitForCanResponse(uint8_t expectedDeskId)
     if (canHandler.readMessage(&messageId, &senderDeskId, data, &length))
     {
         if (length < 1 || data[0] != myDeskId)
-            return;
+            return 0.0f; // No response received
 
         msgType = static_cast<MessageType>(messageId);
     

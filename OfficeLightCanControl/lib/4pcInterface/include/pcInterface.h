@@ -117,7 +117,7 @@ private:
     
 
     bool sendCanCommand(MessageType msgType, uint8_t targetDeskId, float value = 0.0f, int intValue = 0);
-    bool waitForCanResponse(uint8_t expectedDeskId);
+    float waitForCanResponse(uint8_t expectedDeskId);
 
 
     bool isNotValidID(int id);

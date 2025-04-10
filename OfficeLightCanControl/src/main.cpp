@@ -64,6 +64,19 @@ void setup()
     
 }
 
+void receive_nodes() {
+    const uint8_t* discovered_ids = networkBoot.getDiscoveredNodeIDs();
+    int count = networkBoot.getNodeCount();
+
+    if (count > 0) {
+        if (calibrator != nullptr) delete calibrator; // cleanup if already exists
+        calibrator = new CalibrationManager(MY_NODE_ID, discovered_ids, count, 7000);
+        calibration_ready = true;
+        Serial.println("Calibration manager initialized.");
+    }
+}    
+
+
 void loop()
 {
 
@@ -86,7 +99,10 @@ void loop()
     }
 
     if (calibrator->isCalibrationComplete() && !gains_stashed) {
-        gains = calibrator->getAllGains();
+        const float* receivedGains = calibrator->getAllGains();
+        for (int i = 0; i < MAX_NODES; ++i) {
+            gains[i] = receivedGains[i];
+        }
         gain = calibrator->getOwnGain();
         float offset = calibrator->getOffset();
         driver.setGainOffset(gain, offset);
@@ -337,15 +353,3 @@ void calibrate_Gd()
     
     Serial.printf("G: %f, d: %f\n", driver.G, driver.d);
 }
-
-void receive_nodes() {
-    const uint8_t* discovered_ids = networkBoot.getDiscoveredNodeIDs();
-    int count = networkBoot.getNodeCount();
-
-    if (count > 0) {
-        if (calibrator != nullptr) delete calibrator; // cleanup if already exists
-        calibrator = new CalibrationManager(MY_NODE_ID, discovered_ids, count, 7000);
-        calibration_ready = true;
-        Serial.println("Calibration manager initialized.");
-    }
-}    

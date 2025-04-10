@@ -88,7 +88,11 @@ enum MessageType
     MSG_AWN_BUFFER_Y,
     
     MSG_ACK,
-    MSG_ERROR
+    MSG_ERROR,
+
+    //OPTIMAL TYPES
+    MSG_OPTIMIZATION_VARIABLES,
+    MSG_OPTIMIZATION_ACK
 };
 
 class pcInterface {

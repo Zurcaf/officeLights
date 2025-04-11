@@ -90,7 +90,13 @@ void CalibrationManager::moveToNextNode() {
 }
 
 float CalibrationManager::readLux() {
-    return luxMeter.getLuxValue();
+    int read_adc = analogRead(A0);
+    float v = (read_adc * 3.3) / 4096;
+    float Rl = ((10000 * 3.3) / v) - 10000;
+    float lux = pow(10, (log10(Rl) - 6.2) / (-0.9));
+    Serial.print("[Sensor] Read lux: ");
+    Serial.println(lux);
+    return lux;
 }
 
 void CalibrationManager::setPWM(float duty) {

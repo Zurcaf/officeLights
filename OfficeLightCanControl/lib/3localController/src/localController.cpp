@@ -151,8 +151,6 @@ void localController::setGainAndExternal(float gain, float offset)
     _gain = gain;         // Update the gain value
     _offset = offset; // Update the reference value
 
-    _Tk *= 1/_gain; // Update the inverse of the gain value
-
     constantCalc(); // Calculate the constants in the local controller
 }
 

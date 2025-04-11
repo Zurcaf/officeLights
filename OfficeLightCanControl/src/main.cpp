@@ -329,7 +329,7 @@ void calibrate_Gd()
             }
             else
             {
-                duty1calibrated = true; // Set the flag to true to exit the loop hhhhhhhhhhhjjjj
+                duty1calibrated = true; // Set the flag to true to exit the loop
             }
         }
 
